@@ -1,0 +1,60 @@
+/*Background animation*/
+.content-hero {
+    width: 100%;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    color: #000;
+    font-family: cursive;
+}
+
+.content-hero h1 {
+    font-size: 60px;
+    margin-top: 80px;
+}
+
+.container {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+
+   /*  Take images little bit down
+   padding-top: 100px;*/
+}
+
+.img-container {
+    width: 100vw;
+    display: flex;
+    animation: slide 12s infinite alternate;
+}
+
+.img-container img {
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+}
+
+@keyframes slide {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-25%);
+    }
+
+    50% {
+        transform: translateX(-50%);
+    }
+
+    75% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(-150%);
+    }
+}
