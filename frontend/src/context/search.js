@@ -1,15 +1,15 @@
 import { createContext, useContext, useState } from "react";
 
-const SearchContext = createContext();
+const SearchContext = createContext({
+  search: { keyword: "", results: [] },
+  setSearch: () => {},
+});
 
-export const SearchProvider = ({ children }) => {
-  
-  const {search, setSearch} = useState({
+const SearchProvider = ({ children }) => {
+  const [search, setSearch] = useState({
     keyword: "",
     results: [],
   });
-
-
 
   return (
     <SearchContext.Provider value={{ search, setSearch }}>
@@ -18,4 +18,6 @@ export const SearchProvider = ({ children }) => {
   );
 };
 
-export const useSearch = () => useContext(SearchContext);
+const useSearch = () => useContext(SearchContext);
+
+export { useSearch, SearchProvider };

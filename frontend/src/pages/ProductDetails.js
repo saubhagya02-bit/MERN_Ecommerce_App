@@ -7,8 +7,8 @@ import toast from "react-hot-toast";
 
 const ProductDetails = () => {
   const params = useParams();
-  const [product, setProduct] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
+  const {product, setProduct} = useState({});
+  const {relatedProducts, setRelatedProducts} = useState([]);
   const { cart, setCart } = useCart();
 
   useEffect(() => {

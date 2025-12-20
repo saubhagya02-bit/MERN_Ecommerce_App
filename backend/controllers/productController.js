@@ -273,23 +273,19 @@ export const searchProductController = async (req, res) => {
   try {
     const { keyword } = req.params;
 
-    if (!keyword) {
-      return res.status(400).send({
-        success: false,
-        message: "Keyword is required",
-      });
-    }
-
-    const results = await Product.find({
+    const results = await productModel.find({
       $or: [
         { name: { $regex: keyword, $options: "i" } },
         { description: { $regex: keyword, $options: "i" } },
       ],
     });
 
-    res.status(200).send(results);
+    res.status(200).send({
+      success: true,
+      results,
+    });
   } catch (error) {
-    console.log("SEARCH ERROR 👉", error);
+    console.log("SEARCH ERROR:", error);
     res.status(500).send({
       success: false,
       message: "Error in search API",
@@ -297,7 +293,6 @@ export const searchProductController = async (req, res) => {
     });
   }
 };
-
 
 
 //Similar product

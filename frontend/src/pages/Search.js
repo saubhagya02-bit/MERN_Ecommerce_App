@@ -4,21 +4,22 @@ import { useSearch } from "../context/search";
 import { useNavigate } from "react-router-dom";
 
 const Search = () => {
-  const [values] = useSearch();
+  const {search} = useSearch();
   const navigate = useNavigate();
+  const results = search?.results || [];
 
   return (
     <Layout title={"Search Results"}>
       <div className="container">
         <h1 className="text-center">Search Results</h1>
         <h6 className="text-center mb-4">
-          {values?.results?.length < 1
+          {search?.results?.length === 0
             ? "No products found"
-            : `Found ${values?.results?.length} products`}
+            : `Found ${results.length} products`}
         </h6>
 
         <div className="d-flex flex-wrap justify-content-center">
-          {values?.results?.map((p) => (
+          {results.map((p) => (
             <div
               className="card m-2"
               style={{ width: "18rem" }}
