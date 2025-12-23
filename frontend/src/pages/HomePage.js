@@ -31,17 +31,25 @@ const HomePage = () => {
     }
   };
 
-  const getAllProducts = async () => {
+  const getAllProducts = async (pageNumber = 1) => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`/api/v1/product/product-list/${page}`);
-      setProducts(data?.products || []);
+      const { data } = await axios.get(
+        `/api/v1/product/product-list/${pageNumber}`
+      );
+      if (pageNumber == 1) {
+        setProducts(data?.products || []);
+      } else {
+        setProducts((prev) => [...prev, ...data.products]);
+      }
+
       setLoading(false);
     } catch (error) {
       setLoading(false);
       console.log(error);
     }
   };
+
   const getTotal = async () => {
     try {
       const { data } = await axios.get("/api/v1/product/product-count");
@@ -56,12 +64,7 @@ const HomePage = () => {
     setPage(nextPage);
 
     if (checked.length || radioValue) {
-      const { data } = await axios.post("/api/v1/product/product-filters", {
-        checked,
-        radio: radioValue,
-        page: nextPage,
-      });
-      setProducts((prev) => [...prev, ...data.products]);
+      filterProduct(nextPage);
     } else {
       const { data } = await axios.get(
         `/api/v1/product/product-list/${nextPage}`
@@ -80,13 +83,18 @@ const HomePage = () => {
     setChecked(updatedChecked);
   };
 
-  const filterProduct = async () => {
+  const filterProduct = async (pageNumber = 1) => {
     try {
       const { data } = await axios.post("/api/v1/product/product-filters", {
         checked,
         radio: radioValue,
+        page: pageNumber,
       });
-      setProducts(data?.products || []);
+      if (pageNumber === 1) {
+        setProducts(data?.products || []);
+      } else {
+        setProducts((prev) => [...prev, ...data.products]);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -107,7 +115,6 @@ const HomePage = () => {
 
   useEffect(() => {
     setPage(1);
-    setProducts([]);
 
     if (checked.length || radioValue) {
       filterProduct(1);

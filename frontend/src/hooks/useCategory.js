@@ -6,10 +6,14 @@ export default function useCategory() {
 
   const getCategories = async () => {
     try {
-      const { data } = await axios.get('/api/v1/category/get-category');
-      setCategories(data?.category);
+      const { data } = await axios.get("/api/v1/category/get-category");
+      
+      if (data?.success) {
+        setCategories(data?.category || data?.getCategory || []);
+      }
     } catch (error) {
       console.log(error);
+      setCategories([]); 
     }
   };
 

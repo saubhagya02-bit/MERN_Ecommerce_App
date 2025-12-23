@@ -200,14 +200,22 @@ export const updateProductController = async (req, res) => {
 //Filter product
 export const productFilterController = async (req, res) => {
   try {
-    const { checked, radio } = req.body;
+    const { checked, radio, page = 1 } = req.body;
+
+    const perPage = 6;
     let args = {};
 
     if (checked?.length > 0) args.category = checked;
-    if (radio && radio.length === 2)
+    if (radio && radio.length === 2) {
       args.price = { $gte: radio[0], $lte: radio[1] };
+    }
 
-    const products = await productModel.find(args).select("-photo");
+    const products = await productModel
+      .find(args)
+      .select("-photo")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * perPage)
+      .limit(perPage);
 
     res.status(200).send({
       success: true,
@@ -272,13 +280,19 @@ export const productListController = async (req, res) => {
 export const searchProductController = async (req, res) => {
   try {
     const { keyword } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const perPage = 6;
 
-    const results = await productModel.find({
-      $or: [
-        { name: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
-      ],
-    });
+    const results = await productModel
+      .find({
+        $or: [
+          { name: { $regex: keyword, $options: "i" } },
+          { description: { $regex: keyword, $options: "i" } },
+        ],
+      })
+      .select("-photo")
+      .skip((page - 1) * perPage)
+      .limit(perPage);
 
     res.status(200).send({
       success: true,
@@ -293,7 +307,6 @@ export const searchProductController = async (req, res) => {
     });
   }
 };
-
 
 //Similar product
 export const relatedProductController = async (req, res) => {
@@ -342,4 +355,3 @@ export const productCategoryController = async (req, res) => {
     });
   }
 };
-
