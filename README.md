@@ -35,7 +35,7 @@ A full-stack **MERN ecommerce application** where users can browse, search and p
 
 * The app is **dockerized** with a workflow that automatically builds the Docker image and pushes it to **Docker Hub** whenever code is pushed to the `main` branch.
 * GitHub Actions workflow file: `.github/workflows/docker-build.yml`
-* Uses **GitHub secrets** to safely handle Docker Hub credentials.
+* Uses GitHub secrets to safely handle AWS credentials.
 
 ---
 
