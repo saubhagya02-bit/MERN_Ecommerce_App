@@ -33,7 +33,7 @@ COPY backend/ ./
 COPY --from=frontend-build /frontend/build ./frontend-build
 
 # Expose backend port
-EXPOSE 3000
+EXPOSE 8080
 
 # Start backend
 CMD ["node", "server.js"]   
