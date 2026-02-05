@@ -36,4 +36,4 @@ COPY --from=frontend-build /frontend/build ./frontend-build
 EXPOSE 3000
 
 # Start backend
-CMD ["node", "index.js"]   # replace index.js with your backend entry file
+CMD ["node", "server.js"]   
