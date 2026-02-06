@@ -1,0 +1,36 @@
+name: Deploy MERN App to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}   
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # Login to AWS ECR
+            aws ecr get-login-password --region eu-north-1 \
+             | docker login --username AWS --password-stdin 872346934358.dkr.ecr.eu-north-1.amazonaws.com
+
+             # Pull latest image from ECR
+            docker pull 872346934358.dkr.ecr.eu-north-1.amazonaws.com/ecommerce-app:latest
+
+            # Stop & remove old container safely
+             docker stop ecommerce || true
+            docker rm ecommerce || true
+
+            # Run new container
+            docker run -d \
+             --name ecommerce \
+             -p 80:8080 \
+              872346934358.dkr.ecr.eu-north-1.amazonaws.com/ecommerce-app:latest
+
