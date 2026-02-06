@@ -10,35 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ${{ secrets.EC2_USER }}   
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # Go to home directory
-            cd ~/  
+            # Login to AWS ECR
+            aws ecr get-login-password --region eu-north-1 \
+             | docker login --username AWS --password-stdin 872346934358.dkr.ecr.eu-north-1.amazonaws.com
 
-            # Clone repo if it doesn't exist, otherwise pull latest changes
-            if [ -d "MERN_Ecommerce_App" ]; then
-              cd MERN_Ecommerce_App
-              git reset --hard
-              git pull origin main
-            else
-              git clone https://github.com/saubhagya02-bit/MERN_Ecommerce_App.git
-              cd MERN_Ecommerce_App
-            fi
+             # Pull latest image from ECR
+            docker pull 872346934358.dkr.ecr.eu-north-1.amazonaws.com/ecommerce-app:latest
 
-            # Stop and remove old container if exists
-            docker stop ecommerce || true
+            # Stop & remove old container safely
+             docker stop ecommerce || true
             docker rm ecommerce || true
 
-            # Build new Docker image
-            docker build -t ecommerce-app:latest .
+            # Run new container
+            docker run -d \
+             --name ecommerce \
+             -p 80:8080 \
+              872346934358.dkr.ecr.eu-north-1.amazonaws.com/ecommerce-app:latest
 
-            # Run container mapping EC2 port 80 to container 3000
-            docker run -d --name ecommerce -p 80:3000 ecommerce-app:latest
