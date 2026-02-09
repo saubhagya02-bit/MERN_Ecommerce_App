@@ -6,9 +6,10 @@ import {
     productPhotoController,
     deleteProductController,
     updateProductController,
-    productListController,       // add this
-    productCountController,      // add this
-    productCategoryController 
+    productListController,       
+    productCountController,     
+    productCategoryController,
+    searchProductController 
 
 } from "../controllers/productController.js";
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
@@ -48,6 +49,9 @@ router.get("/get-product/:slug", getSingleProductController);
 
 //Get photo
 router.get('/product-photo/:pid', productPhotoController);
+
+// Search products by keyword
+router.get("/search/:keyword", searchProductController);
 
 //Delete product
 router.delete('/product/:pid', deleteProductController);

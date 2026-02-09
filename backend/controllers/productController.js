@@ -199,7 +199,7 @@ export const productListController = async (req, res) => {
       .find({})
       .skip((page - 1) * perPage)
       .limit(perPage)
-      .select("-photo") // exclude photo to reduce payload
+      .select("-photo") 
       .sort({ createdAt: -1 });
 
     res.status(200).send({
@@ -257,6 +257,49 @@ export const productCategoryController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error fetching products by category",
+      error: error.message,
+    });
+  }
+};
+
+export const searchProductController = async (req, res) => {
+  try {
+    const { keyword } = req.params;
+    const searchKeyword = keyword.trim();
+
+    if (!searchKeyword) {
+      return res.status(400).send({
+        success: false,
+        message: "Keyword is required for search",
+      });
+    }
+
+    // Search category
+    const category = await Category.findOne({ name: { $regex: searchKeyword, $options: "i" } });
+
+    let query = {
+      $or: [
+        { name: { $regex: searchKeyword, $options: "i" } },
+        { description: { $regex: searchKeyword, $options: "i" } },
+      ],
+    };
+
+    if (category) {
+      query = { $or: [...query.$or, { category: category._id }] };
+    }
+
+    const results = await productModel.find(query).select("-photo");
+
+    res.status(200).send({
+      success: true,
+      count: results.length,
+      products: results,
+    });
+  } catch (error) {
+    console.log("Search Product Error:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error searching products",
       error: error.message,
     });
   }

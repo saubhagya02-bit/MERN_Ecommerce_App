@@ -13,10 +13,11 @@ const SearchInput = () => {
       const { data } = await axios.get(
         `/api/v1/product/search/${search.keyword}`
       );
-      setSearch({ ...search, results: data.results });
+
+      setSearch({ ...search, results: data.products });
       navigate("/search");
     } catch (error) {
-      console.log(error);
+      console.log("Search error:", error);
     }
   };
 
