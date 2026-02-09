@@ -1,13 +1,17 @@
 {
   "files": {
     "main.css": "/MERN_Ecommerce_App/static/css/main.167e52ee.css",
-    "main.js": "/MERN_Ecommerce_App/static/js/main.b9928567.js",
+    "main.js": "/MERN_Ecommerce_App/static/js/main.00e06c67.js",
+    "static/media/Cosmatics-banner.png": "/MERN_Ecommerce_App/static/media/Cosmatics-banner.a6796ab08430b94edab3.png",
+    "static/media/Electronics-banner.png": "/MERN_Ecommerce_App/static/media/Electronics-banner.9e3427e95bf5247f64df.png",
+    "static/media/Accessories-banner.png": "/MERN_Ecommerce_App/static/media/Accessories-banner.9af6c61aebaf3ea02e52.png",
+    "static/media/Cloth-banner.png": "/MERN_Ecommerce_App/static/media/Cloth-banner.3881eb325e316ae4469a.png",
     "index.html": "/MERN_Ecommerce_App/index.html",
     "main.167e52ee.css.map": "/MERN_Ecommerce_App/static/css/main.167e52ee.css.map",
-    "main.b9928567.js.map": "/MERN_Ecommerce_App/static/js/main.b9928567.js.map"
+    "main.00e06c67.js.map": "/MERN_Ecommerce_App/static/js/main.00e06c67.js.map"
   },
   "entrypoints": [
     "static/css/main.167e52ee.css",
-    "static/js/main.b9928567.js"
+    "static/js/main.00e06c67.js"
   ]
 }
