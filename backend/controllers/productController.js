@@ -1,6 +1,7 @@
 import productModel from "../models/productModel.js";
 import fs from "fs";
 import slugify from "slugify";
+import Category from "../models/categoryModel.js";
 
 //Create product
 export const createProductController = async (req, res) => {
@@ -184,6 +185,78 @@ export const updateProductController = async(req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in updating product",
+      error: error.message,
+    });
+  }
+};
+// Get paginated product list
+export const productListController = async (req, res) => {
+  try {
+    const perPage = 10;
+    const page = req.params.page || 1;
+
+    const products = await productModel
+      .find({})
+      .skip((page - 1) * perPage)
+      .limit(perPage)
+      .select("-photo") // exclude photo to reduce payload
+      .sort({ createdAt: -1 });
+
+    res.status(200).send({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.log("Product List Error:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error fetching product list",
+      error: error.message,
+    });
+  }
+};
+
+// Get total product count
+export const productCountController = async (req, res) => {
+  try {
+    const total = await productModel.countDocuments();
+    res.status(200).send({
+      success: true,
+      total,
+    });
+  } catch (error) {
+    console.log("Product Count Error:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error fetching product count",
+      error: error.message,
+    });
+  }
+};
+
+// Get products by category
+export const productCategoryController = async (req, res) => {
+  try {
+    const category = await Category.findOne({ slug: req.params.slug });
+    if (!category) {
+      return res.status(404).send({ success: false, message: "Category not found" });
+    }
+
+    const products = await productModel
+      .find({ category: category._id })
+      .select("-photo");
+
+    res.status(200).send({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.log("Product Category Error:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error fetching products by category",
       error: error.message,
     });
   }

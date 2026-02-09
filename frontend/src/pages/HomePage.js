@@ -8,6 +8,10 @@ import { useCart } from "../context/cart";
 import toast from "react-hot-toast";
 import useCategory from "../hooks/useCategory";
 import "./HomePage.css";
+import accessories from "../assets/images/Accessories-banner.png";
+import cosmetics from "../assets/images/Cosmatics-banner.png";
+import cloth from "../assets/images/Cloth-banner.png";
+import electronics from "../assets/images/Electronics-banner.png";
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
@@ -126,13 +130,13 @@ const HomePage = () => {
   return (
     <Layout title="All Products">
       <div className="container-fluid p-0">
-        <div className="img-container">
-          <img src="/Images/Accessories-banner.png" alt="Accessories" />
-          <img src="/Images/Cosmatics-banner.png" alt="Cosmatics" />
-          <img src="/Images/Cloth-banner.png" alt="Cloth" />
-          <img src="/Images/Electronics-banner.png" alt="Electronics" />
-        </div>
-      </div>
+  <div className="img-container">
+    <img src={accessories} alt="Accessories" />
+    <img src={cosmetics} alt="Cosmatics" />
+    <img src={cloth} alt="Cloth" />
+    <img src={electronics} alt="Electronics" />
+  </div>
+</div>
 
       <div className="content-hero" id="home">
         <h1>Welcome to our store...!</h1>

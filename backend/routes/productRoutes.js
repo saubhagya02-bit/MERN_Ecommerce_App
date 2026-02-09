@@ -6,6 +6,10 @@ import {
     productPhotoController,
     deleteProductController,
     updateProductController,
+    productListController,       // add this
+    productCountController,      // add this
+    productCategoryController 
+
 } from "../controllers/productController.js";
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
 import formidable from "express-formidable";
@@ -26,6 +30,15 @@ router.put(
   formidable(),
   updateProductController
 );
+
+// Paginated product list
+router.get("/product-list/:page", productListController);
+
+// Total product count
+router.get("/product-count", productCountController);
+
+// Products by category
+router.get("/product-category/:slug", productCategoryController);
 
 //Get product
 router.get("/get-product", getProductController);
