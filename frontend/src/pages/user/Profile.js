@@ -56,7 +56,7 @@ const Profile = () => {
           <div className="col-md-3">
             <UserMenu />
           </div>
-          <div className="col-mb-9">
+          <div className="col-md-9">
             <h1>
               <div className="register">
                 <h1>User Profile</h1>
