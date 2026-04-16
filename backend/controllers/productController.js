@@ -304,3 +304,56 @@ export const searchProductController = async (req, res) => {
     });
   }
 };
+// Get related products (same category, exclude current product)
+export const relatedProductController = async (req, res) => {
+  try {
+    const { pid, cid } = req.params;
+    const products = await productModel
+      .find({ category: cid, _id: { $ne: pid } })
+      .select("-photo")
+      .limit(4)
+      .populate("category");
+ 
+    res.status(200).send({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    console.log("Related Product Error:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error fetching related products",
+      error: error.message,
+    });
+  }
+};
+ 
+// Filter products by category checkboxes and price radio
+export const productFiltersController = async (req, res) => {
+  try {
+    const { checked, radio } = req.body;
+    let args = {};
+ 
+    if (checked && checked.length > 0) {
+      args.category = { $in: checked };
+    }
+    if (radio && radio.length === 2) {
+      args.price = { $gte: radio[0], $lte: radio[1] };
+    }
+ 
+    const products = await productModel.find(args).select("-photo");
+ 
+    res.status(200).send({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    console.log("Filter Product Error:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error filtering products",
+      error: error.message,
+    });
+  }
+};
+
