@@ -28,6 +28,12 @@ const UpdateProduct = () => {
         `/api/v1/product/get-product/${params.slug}`
       );
 
+      if (!data?.product) {
+        toast.error("Product not found");
+        navigate("/dashboard/admin/products");
+        return;
+      }
+
       setName(data.product.name);
       setId(data.product._id);
       setDescription(data.product.description);
@@ -37,6 +43,7 @@ const UpdateProduct = () => {
       setShipping(data.product.shipping ? "1" : "0");
     } catch (error) {
       console.log(error);
+      toast.error("Error fetching product");
     }
   };
 
