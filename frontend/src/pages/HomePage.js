@@ -15,7 +15,7 @@ import electronics from "../assets/images/Electronics-banner.png";
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
-  const { categories, setCategories } = useCategory();
+  const categories = useCategory();
   const { cart, setCart } = useCart();
   const [checked, setChecked] = useState([]);
   const [radioValue, setRadioValue] = useState(null);
@@ -23,17 +23,6 @@ const HomePage = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const getAllCategory = async () => {
-    try {
-      const { data } = await axios.get("/api/v1/category/get-category");
-      if (data?.success) {
-        setCategories(data.category);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const getAllProducts = async (pageNumber = 1) => {
     try {
@@ -112,7 +101,6 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    getAllCategory();
     getAllProducts();
     getTotal();
   }, []);
