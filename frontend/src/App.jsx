@@ -30,6 +30,10 @@ import Users from "./pages/Admin/Users";
 import PrivateRoute from "./components/Routes/PrivateRoute";
 import AdminRoute from "./components/Routes/AdminRoute";
 
+import CheckoutPage from "./pages/public/CheckoutPage";
+import PaymentPage from "./pages/public/PaymentPage";
+import OrderSuccess from "./pages/public/OrderSuccess";
+
 const App = () => (
   <>
     <Toaster position="top-right" />
@@ -64,6 +68,10 @@ const App = () => (
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
+
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/payment" element={<PaymentPage />} />
+      <Route path="/order-success" element={<OrderSuccess />} />
     </Routes>
   </>
 );
