@@ -48,7 +48,7 @@ const Products = () => {
                       {truncate(p.description, 60)}
                     </p>
                     <span className="inline-block mt-2 text-xs bg-blue-50 text-primary px-2 py-1 rounded-full font-medium">
-                      Edit →
+                      Edit
                     </span>
                   </div>
                 </Link>
