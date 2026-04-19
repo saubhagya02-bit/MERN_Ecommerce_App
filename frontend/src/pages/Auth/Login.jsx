@@ -7,9 +7,9 @@ import authService from "../../api/authService";
 import { setCredentials } from "../../store/slices/authSlice";
 
 const Login = () => {
-  const dispatch  = useDispatch();
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -81,14 +81,21 @@ const Login = () => {
               Forgot password?
             </Link>
 
-            <button type="submit" disabled={loading} className="btn-primary py-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary py-3"
+            >
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
 
           <p className="text-sm text-center text-gray-500 mt-4">
             Don&apos;t have an account?{" "}
-            <Link to="/register" className="text-primary font-medium hover:underline">
+            <Link
+              to="/register"
+              className="text-primary font-medium hover:underline"
+            >
               Register here
             </Link>
           </p>

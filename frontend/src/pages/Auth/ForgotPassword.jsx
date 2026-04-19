@@ -6,7 +6,7 @@ import authService from "../../api/authService";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const [form, setForm]     = useState({ email: "", answer: "", newPassword: "" });
+  const [form, setForm] = useState({ email: "", answer: "", newPassword: "" });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
@@ -38,12 +38,14 @@ const ForgotPassword = () => {
             Reset Password 🔐
           </h1>
           <p className="text-sm text-gray-500 text-center mb-6">
-            Enter your email, security answer, and a new password.
+            Enter your email, security answer and a new password.
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
               <input
                 type="email"
                 name="email"
@@ -71,7 +73,9 @@ const ForgotPassword = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                New Password
+              </label>
               <input
                 type="password"
                 name="newPassword"
@@ -83,7 +87,11 @@ const ForgotPassword = () => {
               />
             </div>
 
-            <button type="submit" disabled={loading} className="btn-primary py-3 mt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary py-3 mt-2"
+            >
               {loading ? "Resetting..." : "Reset Password"}
             </button>
           </form>
