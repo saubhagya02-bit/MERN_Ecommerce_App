@@ -6,13 +6,20 @@ import ProductCard from "../../components/common/ProductCard";
 import productService from "../../api/productService";
 import useCategory from "../../hooks/useCategory";
 import { PRICE_RANGES } from "../../utils/constants";
+import accessoriesBanner from "../../assets/images/Accessories-banner.png";
+import clothBanner from "../../assets/images/Cloth-banner.png";
+import cosmaticsBanner from "../../assets/images/Cosmatics-banner.png";
+import electronicsBanner from "../../assets/images/Electronics-banner.png";
 
-// Banner images — put your own in src/assets/images/
+// Banner images 
 const BANNERS = [
   "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=80",
   "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1400&q=80",
-  "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=1400&q=80",
+  accessoriesBanner,
+  clothBanner,
+  cosmaticsBanner,
+  electronicsBanner
+  
 ];
 
 const HomePage = () => {
@@ -119,7 +126,7 @@ const HomePage = () => {
 
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-center px-4">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
-            Welcome to EShop
+            Welcome to EliteMart
           </h1>
           <p className="text-lg md:text-xl text-white/90 max-w-xl">
             Tech, fashion, home &amp; more — shop faster, live better.
