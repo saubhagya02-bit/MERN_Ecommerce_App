@@ -1,33 +1,30 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Spinner = ({ path = "login" }) => {
-  const [count, serCount] = useState(3);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [count, setCount] = useState(3);
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
   useEffect(() => {
     const interval = setInterval(() => {
-      serCount((prevValue) => --prevValue);
+      setCount((prev) => prev - 1);
     }, 1000);
-    count === 0 &&
-      navigate(`/${path}`, {
-        state: location.pathname,
-      });
+
+    if (count === 0) {
+      navigate(`/${path}`, { state: location.pathname });
+    }
+
     return () => clearInterval(interval);
   }, [count, navigate, location, path]);
+
   return (
-    <>
-      <div
-        className="d-flex flex-column justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
-        <h1 className="Text-center">redirecting to you in {count} second</h1>
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    </>
+    <div className="flex flex-col items-center justify-center h-screen gap-4">
+      <p className="text-lg font-medium text-gray-600">
+        Redirecting in {count} second{count !== 1 ? "s" : ""}...
+      </p>
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
   );
 };
 

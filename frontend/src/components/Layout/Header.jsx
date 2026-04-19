@@ -1,142 +1,205 @@
-import React from "react";
-import { NavLink, Link } from "react-router-dom";
-import "./Header.css";
-import { useAuth } from "../../context/auth";
+import { useState } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Badge } from "antd";
 import toast from "react-hot-toast";
-import SearchInput from "../Form/SearchInput";
+import {
+  logout,
+  selectCurrentUser,
+  selectIsAdmin,
+} from "../../store/slices/authSlice";
+import { selectCartCount } from "../../store/slices/cartSlice";
 import useCategory from "../../hooks/useCategory";
-import { useCart } from "../../context/cart";
-import { Avatar, Badge } from "antd";
+import SearchInput from "../Form/SearchInput";
+import { HiShoppingCart, HiMenu, HiX } from "react-icons/hi";
 
 const Header = () => {
-  const { auth, setAuth } = useAuth();
-  const { cart } = useCart();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const isAdmin = useSelector(selectIsAdmin);
+  const cartCount = useSelector(selectCartCount);
   const categories = useCategory();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
 
   const handleLogout = () => {
-    setAuth({ ...auth, user: null, token: "" });
-    localStorage.removeItem("auth");
-    toast.success("Logout Successfully");
+    dispatch(logout());
+    toast.success("Logged out successfully");
+    navigate("/login");
   };
 
-  
   return (
-    <>
-      <nav className="navbar navbar-expand-lg bg-body-tertiary">
-        <div className="container-fluid">
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarTogglerDemo01"
-            aria-controls="navbarTogglerDemo01"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+        <NavLink
+          to="/"
+          className="text-xl font-bold tracking-widest text-primary"
+        >
+          🛒 EliteMart
+        </NavLink>
+
+        <div className="hidden md:flex items-center gap-6">
+          <SearchInput />
+
+          <NavLink
+            to="/"
+            className="text-sm font-medium text-gray-700 hover:text-primary transition-colors"
           >
-            <span className="navbar-toggler-icon" />
-          </button>
+            Home
+          </NavLink>
 
-          <div className="collapse navbar-collapse" id="navbarTogglerDemo01">
-            <NavLink to="/" className="navbar-brand">
-              🛒 EShop
-            </NavLink>
-
-            <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
-              <SearchInput />
-
-              <li className="nav-item">
-                <NavLink to="/" className="nav-link active">
-                  Home
-                </NavLink>
-              </li>
-
-              <li className="nav-item dropdown">
+          {/* Categories dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setCatOpen((o) => !o)}
+              className="text-sm font-medium text-gray-700 hover:text-primary transition-colors flex items-center gap-1"
+            >
+              Categories ▾
+            </button>
+            {catOpen && (
+              <div className="absolute top-8 left-0 bg-white rounded-xl shadow-lg border border-gray-100 min-w-[180px] py-2 z-50">
                 <Link
-                  className="nav-link dropdown-toggle"
-                  to={"/categories"}
-                  data-bs-toggle="dropdown"
+                  to="/categories"
+                  onClick={() => setCatOpen(false)}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary"
                 >
-                  Categories
+                  All Categories
                 </Link>
-                <ul className="dropdown-menu">
-                  <li>
-                    <Link className="dropdown-item" to={"/categories"}>
-                      All Categories
-                    </Link>
-                  </li>
-
-                  {categories?.map((c) => (
-                    <li key={c._id}>
-                      <Link
-                        className="dropdown-item"
-                        to={`/category/${c.slug}`}
-                      >
-                        {c.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-
-              {!auth.user ? (
-                <>
-                  <li className="nav-item">
-                    <NavLink to="/register" className="nav-link">
-                      Register
-                    </NavLink>
-                  </li>
-                  <li className="nav-item">
-                    <NavLink to="/login" className="nav-link">
-                      Login
-                    </NavLink>
-                  </li>
-                </>
-              ) : (
-                <li className="nav-item dropdown">
-                  <a
-                    className="nav-link dropdown-toggle"
-                    href="#"
-                    role="button"
-                    data-bs-toggle="dropdown"
+                {categories.map((c) => (
+                  <Link
+                    key={c._id}
+                    to={`/category/${c.slug}`}
+                    onClick={() => setCatOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary"
                   >
-                    {auth.user.name}
-                  </a>
-                  <ul className="dropdown-menu">
-                    <li>
-                      <NavLink
-                        to={`/dashboard/${
-                          auth.user.role === 1 ? "admin" : "user"
-                        }`}
-                        className="dropdown-item"
-                      >
-                        Dashboard
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink
-                        onClick={handleLogout}
-                        to="/login"
-                        className="dropdown-item"
-                      >
-                        Logout
-                      </NavLink>
-                    </li>
-                  </ul>
-                </li>
-              )}
-
-              <li className="nav-item d-flex align-items-center">
-                <Badge count={cart?.length} showZero>
-                  <NavLink to="/cart" className="nav-link">
-                    Cart
-                  </NavLink>
-                </Badge>
-              </li>
-            </ul>
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
+
+          {!user ? (
+            <>
+              <NavLink
+                to="/register"
+                className="text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+              >
+                Register
+              </NavLink>
+              <NavLink to="/login" className="btn-primary text-sm">
+                Login
+              </NavLink>
+            </>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setUserOpen((o) => !o)}
+                className="text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+              >
+                {user.name} ▾
+              </button>
+              {userOpen && (
+                <div className="absolute top-8 right-0 bg-white rounded-xl shadow-lg border border-gray-100 min-w-[160px] py-2 z-50">
+                  <Link
+                    to={isAdmin ? "/dashboard/admin" : "/dashboard/user"}
+                    onClick={() => setUserOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-red-50"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Cart */}
+          <NavLink to="/cart">
+            <Badge count={cartCount} showZero>
+              <HiShoppingCart className="text-2xl text-gray-700 hover:text-primary transition-colors" />
+            </Badge>
+          </NavLink>
         </div>
-      </nav>
-    </>
+
+        {/* Mobile toggle */}
+        <button
+          className="md:hidden text-2xl text-gray-700"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          {menuOpen ? <HiX /> : <HiMenu />}
+        </button>
+      </div>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 flex flex-col gap-3">
+          <SearchInput />
+          <NavLink
+            to="/"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm text-gray-700"
+          >
+            Home
+          </NavLink>
+          <NavLink
+            to="/categories"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm text-gray-700"
+          >
+            Categories
+          </NavLink>
+          {!user ? (
+            <>
+              <NavLink
+                to="/register"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm text-gray-700"
+              >
+                Register
+              </NavLink>
+              <NavLink
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm text-gray-700"
+              >
+                Login
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink
+                to={isAdmin ? "/dashboard/admin" : "/dashboard/user"}
+                onClick={() => setMenuOpen(false)}
+                className="text-sm text-gray-700"
+              >
+                Dashboard
+              </NavLink>
+              <button
+                onClick={handleLogout}
+                className="text-left text-sm text-danger"
+              >
+                Logout
+              </button>
+            </>
+          )}
+          <NavLink
+            to="/cart"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm text-gray-700"
+          >
+            Cart ({cartCount})
+          </NavLink>
+        </div>
+      )}
+    </nav>
   );
 };
 

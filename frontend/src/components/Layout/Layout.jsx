@@ -1,33 +1,31 @@
-import React from "react";
-import Footer from "./Footer";
-import Header from "./Header";
 import { Helmet } from "react-helmet";
-import { Toaster } from 'react-hot-toast';
+import Header from "./Header";
+import Footer from "./Footer";
 
-const Layout = ({ children, title, description, keywords, author }) => {
-  return (
-    <div>
-      <Helmet>
-        <meta charSet="utf-8" />
-        <meta name="description" content={description} />
-        <meta name="keywords" content={keywords} />
-        <meta name="author" content={author} />
-        <title>{title}</title>
-      </Helmet>
-      <Header />
-      <main style={{ minHeight: "80vh" }}>
-        <Toaster />
-        {children}
-      </main>
-      <Footer />
-    </div>
-  );
-};
+const Layout = ({
+  children,
+  title = "EShop",
+  description = "MERN Stack Ecommerce",
+  keywords = "MERN, React, MongoDB",
+  author = "EShop",
+}) => (
+  <div className="flex flex-col min-h-screen">
+    <Helmet>
+      <meta charSet="utf-8" />
+      <meta name="description" content={description} />
+      <meta name="keywords" content={keywords} />
+      <meta name="author" content={author} />
+      <title>{title}</title>
+    </Helmet>
 
-Layout.defaultProps = {
-  title: "Ecommerce App",
-  description: "MERN Stack Project",
-  keywords: "MERN, React, MongoDB",
-  author: "Ushani",
-};
+    <Header />
+
+    <main className="flex-1 pt-16">
+      {children}
+    </main>
+
+    <Footer />
+  </div>
+);
+
 export default Layout;

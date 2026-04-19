@@ -1,213 +1,218 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Select } from "antd";
+import toast from "react-hot-toast";
 import Layout from "../../components/Layout/Layout";
 import AdminMenu from "../../components/Layout/AdminMenu";
-import toast from "react-hot-toast";
-import axios from "axios";
-import { Select } from "antd";
-import { useNavigate, useParams } from "react-router-dom";
+import categoryService from "../../api/categoryService";
+import productService from "../../api/productService";
 
 const { Option } = Select;
 
 const UpdateProduct = () => {
   const navigate = useNavigate();
-  const params = useParams(); 
-
-  const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState("");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [shipping, setShipping] = useState("");
-  const [photo, setPhoto] = useState("");
+  const { slug } = useParams();
   const [id, setId] = useState("");
-
-  const getSingleProduct = async () => {
-    try {
-      const { data } = await axios.get(
-        `/api/v1/product/get-product/${params.slug}`
-      );
-
-      if (!data?.product) {
-        toast.error("Product not found");
-        navigate("/dashboard/admin/products");
-        return;
-      }
-
-      setName(data.product.name);
-      setId(data.product._id);
-      setDescription(data.product.description);
-      setPrice(data.product.price);
-      setCategory(data.product.category._id);
-      setQuantity(data.product.quantity);
-      setShipping(data.product.shipping ? "1" : "0");
-    } catch (error) {
-      console.log(error);
-      toast.error("Error fetching product");
-    }
-  };
-
-  // Get all categories
-  const getAllCategory = async () => {
-    try {
-      const { data } = await axios.get("/api/v1/category/get-category");
-      if (data?.success) {
-        setCategories(data.category);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong in getting category");
-    }
-  };
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    quantity: "",
+    category: "",
+    shipping: "",
+  });
+  const [photo, setPhoto] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getSingleProduct();
-    getAllCategory();
-  }, []);
+    const fetchData = async () => {
+      try {
+        const [productRes, catRes] = await Promise.all([
+          productService.getOne(slug),
+          categoryService.getAll(),
+        ]);
 
-  // Update product
+        const p = productRes.data?.product;
+        if (!p) {
+          toast.error("Product not found");
+          navigate("/dashboard/admin/products");
+          return;
+        }
+
+        setId(p._id);
+        setForm({
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          quantity: p.quantity,
+          category: p.category?._id || "",
+          shipping: p.shipping ? "1" : "0",
+        });
+
+        if (catRes.data?.success) setCategories(catRes.data.category);
+      } catch {
+        toast.error("Failed to load product");
+      }
+    };
+    fetchData();
+  }, [slug, navigate]);
+
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const productData = new FormData();
-      productData.append("name", name);
-      productData.append("description", description);
-      productData.append("price", price);
-      productData.append("quantity", quantity);
-      productData.append("category", category);
-      productData.append("shipping", shipping);
-      if (photo) productData.append("photo", photo);
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      if (photo) fd.append("photo", photo);
 
-      const { data } = await axios.put(
-        `/api/v1/product/update-product/${id}`,
-        productData
-      );
-
+      const { data } = await productService.update(id, fd);
       if (data?.success) {
-        toast.success("Product updated successfully");
+        toast.success("Product updated!");
         navigate("/dashboard/admin/products");
       } else {
-        toast.error(data.message);
+        toast.error(data?.message || "Update failed");
       }
-    } catch (error) {
-      console.log(error);
-      toast.error("Update failed");
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Delete product
   const handleDelete = async () => {
-  try {
-    const confirmed = window.confirm("Are you sure you want to delete this product?");
-    if (!confirmed) return; 
-
-    await axios.delete(`/api/v1/product/delete-product/${id}`);
-
-    toast.success("Product deleted successfully");
-    navigate("/dashboard/admin/products");
-  } catch (error) {
-    console.log(error);
-    toast.error("Something went wrong");
-  }
-};
-
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
+    try {
+      await productService.delete(id);
+      toast.success("Product deleted");
+      navigate("/dashboard/admin/products");
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
 
   return (
-    <Layout title={"Update Product"}>
-      <div className="row">
-        <div className="col-md-3">
-          <AdminMenu />
-        </div>
-
-        <div className="col-md-9 d-flex justify-content-center">
-          <div className="w-75">
-            <h1 className="text-center mb-4">Update Product</h1>
-
-            <Select
-              size="large"
-              className="form-select mb-3"
-              value={category}
-              onChange={(value) => setCategory(value)}
-            >
-              {categories.map((c) => (
-                <Option key={c._id} value={c._id}>
-                  {c.name}
-                </Option>
-              ))}
-            </Select>
-
-            <div className="mb-3">
-              <label className="btn btn-outline-secondary col-md-12">
-                {photo ? photo.name : "Upload Photo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) => setPhoto(e.target.files[0])}
-                />
-              </label>
-            </div>
-
-            <div className="mb-3 text-center">
-              <img
-                src={
-                  photo
-                    ? URL.createObjectURL(photo)
-                    : `/api/v1/product/product-photo/${id}`
-                }
-                alt="product"
-                height="200"
-              />
-            </div>
-
-            <input
-              className="form-control mb-3"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Product Name"
-            />
-
-            <input
-              className="form-control mb-3"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description"
-            />
-
-            <input
-              type="number"
-              className="form-control mb-3"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Price"
-            />
-
-            <input
-              type="number"
-              className="form-control mb-3"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="Quantity"
-            />
-
-            <Select
-              size="large"
-              className="form-select mb-3"
-              value={shipping}
-              onChange={(value) => setShipping(value)}
-            >
-              <Option value="0">No</Option>
-              <Option value="1">Yes</Option>
-            </Select>
-
-            <div className="d-flex gap-2 mb-3">
-              <button className="btn btn-primary" onClick={handleUpdate}>
+    <Layout title="Update Product">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1">
+            <AdminMenu />
+          </div>
+          <div className="md:col-span-3">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">
                 Update Product
-              </button>
+              </h2>
 
-              <button className="btn btn-danger" onClick={handleDelete}>
-                Delete Product
-              </button>
+              <form
+                onSubmit={handleUpdate}
+                className="flex flex-col gap-4 max-w-lg"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <Select
+                    value={form.category || undefined}
+                    size="large"
+                    className="w-full"
+                    onChange={(val) =>
+                      setForm((p) => ({ ...p, category: val }))
+                    }
+                  >
+                    {categories.map((c) => (
+                      <Option key={c._id} value={c._id}>
+                        {c.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Photo
+                  </label>
+                  <label className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                    <span className="text-sm text-gray-500">
+                      {photo ? photo.name : "Click to change photo"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => setPhoto(e.target.files[0])}
+                    />
+                  </label>
+                  <img
+                    src={
+                      photo
+                        ? URL.createObjectURL(photo)
+                        : productService.getPhotoUrl(id)
+                    }
+                    alt="product"
+                    className="mt-3 h-40 object-contain rounded-lg border border-gray-100"
+                  />
+                </div>
+
+                {[
+                  { name: "name", label: "Product Name", type: "text" },
+                  { name: "description", label: "Description", type: "text" },
+                  { name: "price", label: "Price ($)", type: "number" },
+                  { name: "quantity", label: "Quantity", type: "number" },
+                ].map(({ name, label, type }) => (
+                  <div key={name}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {label}
+                    </label>
+                    <input
+                      type={type}
+                      name={name}
+                      value={form[name]}
+                      onChange={handleChange}
+                      className="input-field"
+                      required
+                    />
+                  </div>
+                ))}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Shipping
+                  </label>
+                  <Select
+                    value={form.shipping || undefined}
+                    size="large"
+                    className="w-full"
+                    onChange={(val) =>
+                      setForm((p) => ({ ...p, shipping: val }))
+                    }
+                  >
+                    <Option value="1">Yes</Option>
+                    <Option value="0">No</Option>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3 mt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn-primary py-3 flex-1"
+                  >
+                    {loading ? "Saving..." : "Update Product"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="btn-danger py-3 flex-1"
+                  >
+                    Delete Product
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

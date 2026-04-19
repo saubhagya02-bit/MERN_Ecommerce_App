@@ -1,208 +1,222 @@
-import React, { useState, useEffect } from "react";
-import Layout from "../../components/Layout/Layout";
-import axios from "axios";
-import { Checkbox, Radio } from "antd";
-import { Prices } from "../components/Prices";
-import { useNavigate } from "react-router-dom";
-import { useCart } from "../context/cart";
+import { useState, useEffect } from "react";
+import { Radio } from "antd";
 import toast from "react-hot-toast";
+import Layout from "../../components/Layout/Layout";
+import ProductCard from "../../components/common/ProductCard";
+import productService from "../../api/productService";
 import useCategory from "../../hooks/useCategory";
-import "./HomePage.css";
-import accessories from "../assets/images/Accessories-banner.png";
-import cosmetics from "../assets/images/Cosmatics-banner.png";
-import cloth from "../assets/images/Cloth-banner.png";
-import electronics from "../assets/images/Electronics-banner.png";
+import { PRICE_RANGES } from "../../utils/constants";
+
+// Banner images — put your own in src/assets/images/
+const BANNERS = [
+  "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=80",
+  "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1400&q=80",
+  "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1400&q=80",
+  "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=1400&q=80",
+];
 
 const HomePage = () => {
-  const [products, setProducts] = useState([]);
   const categories = useCategory();
-  const { cart, setCart } = useCart();
-  const [checked, setChecked] = useState([]);
-  const [radioValue, setRadioValue] = useState(null);
+  const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [checked, setChecked] = useState([]);
+  const [radio, setRadio] = useState(null);
+  const [bannerIdx, setBannerIdx] = useState(0);
 
-  const getAllProducts = async (pageNumber = 1) => {
+  useEffect(() => {
+    const t = setInterval(
+      () => setBannerIdx((i) => (i + 1) % BANNERS.length),
+      3500,
+    );
+    return () => clearInterval(t);
+  }, []);
+
+  const fetchProducts = async (pageNum = 1, append = false) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const { data } = await axios.get(
-        `/api/v1/product/product-list/${pageNumber}`
+      const { data } = await productService.getList(pageNum);
+      setProducts((prev) =>
+        append ? [...prev, ...data.products] : data.products || [],
       );
-      if (pageNumber == 1) {
-        setProducts(data?.products || []);
-      } else {
-        setProducts((prev) => [...prev, ...data.products]);
-      }
-
+    } catch {
+      toast.error("Failed to load products");
+    } finally {
       setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
     }
   };
 
-  const getTotal = async () => {
+  const fetchTotal = async () => {
+    const { data } = await productService.getCount();
+    setTotal(data?.total || 0);
+  };
+
+  const filterProducts = async (pageNum = 1, append = false) => {
+    setLoading(true);
     try {
-      const { data } = await axios.get("/api/v1/product/product-count");
-      setTotal(data?.total || 0);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const loadMore = async () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-
-    if (checked.length || radioValue) {
-      filterProduct(nextPage);
-    } else {
-      const { data } = await axios.get(
-        `/api/v1/product/product-list/${nextPage}`
+      const { data } = await productService.filter(checked, radio);
+      setProducts((prev) =>
+        append ? [...prev, ...data.products] : data.products || [],
       );
-      setProducts((prev) => [...prev, ...data.products]);
+    } catch {
+      toast.error("Filter failed");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleFilter = (value, id) => {
-    let updatedChecked = [...checked];
-    if (value) {
-      updatedChecked.push(id);
+  useEffect(() => {
+    fetchProducts(1);
+    fetchTotal();
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+    if (checked.length || radio) {
+      filterProducts(1);
     } else {
-      updatedChecked = updatedChecked.filter((c) => c !== id);
+      fetchProducts(1);
     }
-    setChecked(updatedChecked);
+  }, [checked, radio]);
+
+  const handleCategoryCheck = (id, value) => {
+    setChecked((prev) =>
+      value ? [...prev, id] : prev.filter((c) => c !== id),
+    );
   };
 
-  const filterProduct = async (pageNumber = 1) => {
-    try {
-      const { data } = await axios.post("/api/v1/product/product-filters", {
-        checked,
-        radio: radioValue,
-        page: pageNumber,
-      });
-      if (pageNumber === 1) {
-        setProducts(data?.products || []);
-      } else {
-        setProducts((prev) => [...prev, ...data.products]);
-      }
-    } catch (error) {
-      console.log(error);
+  const handleLoadMore = async () => {
+    const next = page + 1;
+    setPage(next);
+    if (checked.length || radio) {
+      filterProducts(next, true);
+    } else {
+      fetchProducts(next, true);
     }
   };
 
   const resetFilters = () => {
     setChecked([]);
-    setRadioValue(null);
+    setRadio(null);
     setPage(1);
-    getAllProducts();
+    fetchProducts(1);
   };
 
-  useEffect(() => {
-    getAllProducts();
-    getTotal();
-  }, []);
-
-  useEffect(() => {
-    setPage(1);
-
-    if (checked.length || radioValue) {
-      filterProduct(1);
-    } else {
-      getAllProducts(1);
-    }
-  }, [checked, radioValue]);
-
   return (
-    <Layout title="All Products">
-      <div className="container-fluid p-0">
-  <div className="img-container">
-    <img src={accessories} alt="Accessories" />
-    <img src={cosmetics} alt="Cosmatics" />
-    <img src={cloth} alt="Cloth" />
-    <img src={electronics} alt="Electronics" />
-  </div>
-</div>
+    <Layout title="EShop — All Products">
+      <div className="relative w-full h-[60vh] overflow-hidden">
+        {BANNERS.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt={`banner-${i}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              i === bannerIdx ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
 
-      <div className="content-hero" id="home">
-        <h1>Welcome to our store...!</h1>
-
-        <p className="text-lg mb-6">
-          Whether you need tech, fashion, home items or more...we help you shop
-          faster.
-        </p>
-      </div>
-
-      <div className="row mt-3">
-        <div className="col-md-3">
-          <h4 className="text-center mt-4">Filter by Price</h4>
-          <div className="d-flex flex-column">
-            <Radio.Group
-              value={radioValue}
-              onChange={(e) => setRadioValue(e.target.value)}
-            >
-              {Prices.map((p) => (
-                <Radio key={p.id} value={p.array}>
-                  {p.name}
-                </Radio>
-              ))}
-            </Radio.Group>
-          </div>
-
-          <div className="d-flex flex-column mt-3">
-            <button className="btn btn-danger" onClick={resetFilters}>
-              Reset Filters
-            </button>
-          </div>
+        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-center px-4">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
+            Welcome to EShop
+          </h1>
+          <p className="text-lg md:text-xl text-white/90 max-w-xl">
+            Tech, fashion, home &amp; more — shop faster, live better.
+          </p>
         </div>
 
-        <div className="col-md-9">
-          <h1 className="text-center">All Products</h1>
-          <div className="d-flex flex-wrap">
-            {products.map((p) => (
-              <div className="card m-2" style={{ width: "18rem" }} key={p._id}>
-                <img
-                  src={`/api/v1/product/product-photo/${p._id}`}
-                  className="card-img-top product-img"
-                  alt={p.name}
-                />
-                <div className="card-body">
-                  <h5 className="card-title">{p.name}</h5>
-                  <p className="card-text">
-                    {p.description?.substring(0, 50)}...
-                  </p>
-                  <p className="card-text">$ {p.price}</p>
-                  <button
-                    className="btn btn-primary ms-1"
-                    onClick={() => navigate(`/product/${p.slug}`)}
-                  >
-                    More Details
-                  </button>
-                  <button
-                    className="btn btn-secondary ms-1"
-                    onClick={() => {
-                      setCart((prevCart) => [...prevCart, p]);
-                      toast.success("Item added to cart");
-                    }}
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          {BANNERS.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setBannerIdx(i)}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                i === bannerIdx ? "bg-white" : "bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
 
-          <div className="m-2 p-3">
-            {products.length < total && (
-              <button
-                className="btn btn-warning mt-3"
-                onClick={loadMore}
-                disabled={loading}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <aside className="md:col-span-1">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sticky top-20">
+              <h3 className="font-bold text-gray-800 mb-4">Filter by Price</h3>
+              <Radio.Group
+                value={radio}
+                onChange={(e) => setRadio(e.target.value)}
+                className="flex flex-col gap-2"
               >
-                {loading ? "Loading..." : "Load More"}
+                {PRICE_RANGES.map((p) => (
+                  <Radio
+                    key={p._id}
+                    value={p.array}
+                    className="text-sm text-gray-600"
+                  >
+                    {p.name}
+                  </Radio>
+                ))}
+              </Radio.Group>
+
+              <h3 className="font-bold text-gray-800 mt-6 mb-3">
+                Filter by Category
+              </h3>
+              <div className="flex flex-col gap-2">
+                {categories.map((c) => (
+                  <label
+                    key={c._id}
+                    className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked.includes(c._id)}
+                      onChange={(e) =>
+                        handleCategoryCheck(c._id, e.target.checked)
+                      }
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    {c.name}
+                  </label>
+                ))}
+              </div>
+
+              <button
+                onClick={resetFilters}
+                className="btn-danger w-full mt-5 text-sm"
+              >
+                Reset Filters
               </button>
+            </div>
+          </aside>
+
+          <div className="md:col-span-3">
+            <h2 className="text-xl font-bold text-gray-800 mb-5">
+              All Products
+            </h2>
+            <div className="flex flex-wrap gap-4">
+              {products.map((p) => (
+                <ProductCard key={p._id} product={p} />
+              ))}
+            </div>
+
+            {products.length === 0 && !loading && (
+              <p className="text-gray-500 text-center py-16">
+                No products found.
+              </p>
+            )}
+
+            {products.length < total && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loading}
+                  className="btn-outline px-8 py-3"
+                >
+                  {loading ? "Loading..." : "Load More"}
+                </button>
+              </div>
             )}
           </div>
         </div>

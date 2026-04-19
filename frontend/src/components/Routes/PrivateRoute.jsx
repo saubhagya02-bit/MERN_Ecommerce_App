@@ -1,24 +1,36 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../context/auth";
 import { Outlet } from "react-router-dom";
-import axios from "axios";
-import Spinner from "../Spinner";
+import { useSelector } from "react-redux";
+import { selectToken } from "../../store/slices/authSlice";
+import authService from "../../api/authService";
+import Spinner from "../common/Spinner";
 
-export default function PrivateRoute() {
-    const [ok, setOk] = useState(false);
-    const {auth, setAuth} = useAuth();
+const PrivateRoute = () => {
+  const [ok, setOk]   = useState(false);
+  const [loading, setLoading] = useState(true);
+  const token = useSelector(selectToken);
 
-    useEffect(() => {
-        const authCheck = async() => {
-            const res = await axios.get('/api/v1/auth/user-auth');
-            if(res.data.ok){
-                setOk(true)
-            }else{
-                setOk(false)
-            }
-        };
-        if (auth?.token) authCheck();
-    }, [auth?.token]);
+  useEffect(() => {
+    if (!token) {
+      setOk(false);
+      setLoading(false);
+      return;
+    }
+    const check = async () => {
+      try {
+        const { data } = await authService.checkUserAuth();
+        setOk(data.ok);
+      } catch {
+        setOk(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    check();
+  }, [token]);
 
-    return ok ? <Outlet/> : <Spinner />
-}
+  if (loading) return <Spinner path="login" />;
+  return ok ? <Outlet /> : <Spinner path="login" />;
+};
+
+export default PrivateRoute;

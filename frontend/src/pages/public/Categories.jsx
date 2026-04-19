@@ -1,24 +1,29 @@
-import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
 import useCategory from "../../hooks/useCategory";
-import { Link } from "react-router-dom";
 
 const Categories = () => {
   const categories = useCategory();
+
   return (
-    <Layout title={"All categories"}>
-      <div className="container">
-        <div className="row">
+    <Layout title="All Categories">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          All Categories
+        </h1>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {categories.map((c) => (
-            <div className="col-md-6 mt-5 mb-3 gx-3 gy-3" key={c._id}>
-              <Link to={`/category/${c.slug}`} className="btn btn-primary">
-                {c.name}
-              </Link>
-            </div>
+            <Link
+              key={c._id}
+              to={`/category/${c.slug}`}
+              className="card p-5 text-center font-medium text-gray-700 hover:text-primary hover:border-primary border-2 border-transparent transition-all"
+            >
+              <span className="text-3xl mb-2 block">🏷️</span>
+              {c.name}
+            </Link>
           ))}
         </div>
       </div>
-      <h1>All Categories</h1>
     </Layout>
   );
 };

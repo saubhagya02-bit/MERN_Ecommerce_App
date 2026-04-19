@@ -1,84 +1,96 @@
-import React, { useState } from "react";
-import Layout from "../../components/Layout/Layout";
-import "./Register.css";
-import toast from "react-hot-toast";
-import axios from "axios";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import Layout from "../../components/Layout/Layout";
+import authService from "../../api/authService";
 
 const ForgotPassword = () => {
-    const [email, setEmail] = useState("");
-      const [newPassword, setNewPassword] = useState("");
-      const [answer, setAnswer] = useState();
-    
-      const navigate = useNavigate();
-    
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-          const res = await axios.post("/api/v1/auth/forgot-password", {
-            email,
-            newPassword,
-            answer,
-          });
-          if (res && res.data.success) {
-            toast.success(res.data.message || "Password Reset Successful");
-            navigate( "/login");
-          } else {
-            toast.error(res.data.message || "Reset failed");
-          }
-        } catch (error) {
-          console.log(error);
-          toast.error("Something went wrong");
-        }
-      };
-  return (
-    <Layout title={"Forgot Password"}>
-        <div className="register">
-        <h1>Reset Password</h1>
-        <form onSubmit={handleSubmit}>
-             <div className="mb-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="form-control"
-              id="exampleInputAnswer1"
-              placeholder="Enter your Email Address"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <input
-              type="text"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="form-control"
-              id="exampleInputAnswer1"
-              placeholder="What's your nickname"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="form-control"
-              id="exampleInputPassword1"
-              placeholder="Enter new Password"
-              required
-            />
-          </div>
+  const navigate = useNavigate();
+  const [form, setForm]     = useState({ email: "", answer: "", newPassword: "" });
+  const [loading, setLoading] = useState(false);
 
-          
-          <button type="submit" className="btn btn-primary">
-            Reset
-          </button>
-        </form>
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { data } = await authService.forgotPassword(form);
+      if (data?.success) {
+        toast.success("Password reset successfully!");
+        navigate("/login");
+      } else {
+        toast.error(data?.message || "Reset failed");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Layout title="Reset Password">
+      <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-md">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">
+            Reset Password 🔐
+          </h1>
+          <p className="text-sm text-gray-500 text-center mb-6">
+            Enter your email, security answer, and a new password.
+          </p>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="your@email.com"
+                className="input-field"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Security Answer (Your Nickname)
+              </label>
+              <input
+                type="text"
+                name="answer"
+                value={form.answer}
+                onChange={handleChange}
+                placeholder="Your nickname"
+                className="input-field"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <input
+                type="password"
+                name="newPassword"
+                value={form.newPassword}
+                onChange={handleChange}
+                placeholder="Min 6 characters"
+                className="input-field"
+                required
+              />
+            </div>
+
+            <button type="submit" disabled={loading} className="btn-primary py-3 mt-2">
+              {loading ? "Resetting..." : "Reset Password"}
+            </button>
+          </form>
+        </div>
       </div>
     </Layout>
-    
-  )
-}
+  );
+};
 
 export default ForgotPassword;

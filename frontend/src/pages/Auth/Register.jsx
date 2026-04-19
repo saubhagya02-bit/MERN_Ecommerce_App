@@ -1,138 +1,126 @@
-import React, { useState } from "react";
-import Layout from "../../components/Layout/Layout";
-import "./Register.css";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import Layout from "../../components/Layout/Layout";
+import authService from "../../api/authService";
+
+const initialForm = {
+  name: "",
+  email: "",
+  password: "",
+  phone: "",
+  address: "",
+  answer: "",
+};
 
 const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [answer, setAnswer] = useState("");
   const navigate = useNavigate();
+  const [form, setForm] = useState(initialForm);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const res = await axios.post(
-        "/api/v1/auth/register",
-        {
-          name,
-          email,
-          password,
-          phone,
-          address,
-          answer,
-        }
-      );
-      if (res && res.data.success) {
-        toast.success(res.data.message);
+      const { data } = await authService.register(form);
+      if (data?.success) {
+        toast.success("Registered successfully!");
         navigate("/login");
       } else {
-        toast.error(res.data.message);
+        toast.error(data?.message || "Registration failed");
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
       toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const fields = [
+    { name: "name", label: "Full Name", type: "text", placeholder: "John Doe" },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "john@example.com",
+    },
+    {
+      name: "password",
+      label: "Password",
+      type: "password",
+      placeholder: "Min 6 characters",
+    },
+    {
+      name: "phone",
+      label: "Phone Number",
+      type: "text",
+      placeholder: "+1 234 567 890",
+    },
+    {
+      name: "address",
+      label: "Address",
+      type: "text",
+      placeholder: "123 Main St",
+    },
+    {
+      name: "answer",
+      label: "Security Answer",
+      type: "text",
+      placeholder: "Your nickname",
+    },
+  ];
+
   return (
-    <Layout title={"Register"}>
-      <div className="register ">
-        <h1>Register Form</h1>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="exampleInputName" className="form-label">
-              Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="form-control"
-              id="exampleInputName1"
-              placeholder="Enter Your Name"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="exampleInputEmail" className="form-label">
-              Email
-            </label>
-            <input
-              type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="form-control"
-              id="exampleInputEmail1"
-              placeholder="Enter Your Email Address"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="exampleInputPassword1" className="form-label">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-control"
-              id="exampleInputPassword1"
-              placeholder="Enter Strong Password"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="exampleInputPhone" className="form-label">
-              Phone
-            </label>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="form-control"
-              id="exampleInputPhone1"
-              placeholder="Enter Your Phone Number"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="exampleInputAddress" className="form-label">
-              Address
-            </label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="form-control"
-              id="exampleInputAddress1"
-              placeholder="Enter Your Address"
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="exampleInputAnswer" className="form-label">
-              Answer
-            </label>
-            <input
-              type="text"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="form-control"
-              id="exampleInputAnswer1"
-              placeholder="What's your nickname"
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary">
-            Submit
-          </button>
-        </form>
+    <Layout title="Register">
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-md">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">
+            Create Account
+          </h1>
+          <p className="text-sm text-gray-500 text-center mb-6">
+            Security answer is your nickname — used to reset your password.
+          </p>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {fields.map(({ name, label, type, placeholder }) => (
+              <div key={name}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {label}
+                </label>
+                <input
+                  type={type}
+                  name={name}
+                  value={form[name]}
+                  onChange={handleChange}
+                  placeholder={placeholder}
+                  className="input-field"
+                  required
+                />
+              </div>
+            ))}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary py-3 mt-2"
+            >
+              {loading ? "Creating account..." : "Register"}
+            </button>
+          </form>
+
+          <p className="text-sm text-center text-gray-500 mt-4">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-primary font-medium hover:underline"
+            >
+              Login here
+            </Link>
+          </p>
+        </div>
       </div>
     </Layout>
   );

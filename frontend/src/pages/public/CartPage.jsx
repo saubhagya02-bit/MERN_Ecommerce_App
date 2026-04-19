@@ -1,132 +1,146 @@
-import React, { useState } from "react";
-import Layout from "../../components/Layout/Layout";
-import { useAuth } from "../context/auth";
-import { useCart } from "../context/cart";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Layout from "../../components/Layout/Layout";
+import productService from "../../api/productService";
+import {
+  selectCartItems,
+  selectCartTotal,
+  removeFromCart,
+} from "../../store/slices/cartSlice";
+import { selectCurrentUser, selectToken } from "../../store/slices/authSlice";
+import { formatPrice, truncate } from "../../utils/formatters";
 
 const CartPage = () => {
-  const { cart, setCart } = useCart();
-  const { auth } = useAuth();
-
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const items = useSelector(selectCartItems);
+  const total = useSelector(selectCartTotal);
+  const user = useSelector(selectCurrentUser);
+  const token = useSelector(selectToken);
 
-  //Total price
-  const totalPrice = () => {
-    try {
-      let total = 0;
-      cart?.map((item) => {
-        total = total + item.price;
-      });
-      return total.toLocaleString("en-US", {
-        style: "currency",
-        currency: "USD",
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  //Remove item from cart
-  const removeCartItem = (pid) => {
-    try {
-      let myCart = [...cart];
-      let index = myCart.findIndex((item) => item._id === pid);
-      myCart.splice(index, 1);
-      setCart(myCart);
-      localStorage.setItem("cart", JSON.stringify(myCart));
-    } catch (error) {
-      console.log(error);
-    }
-  };
   return (
-    <Layout>
-      <div className="container">
-        <div className="row">
-          <div className="col-md-12">
-            <h1 className="text-center bg-light p-2 mb-1">
-              {`Hello ${auth?.token && auth?.user?.name}`}
-            </h1>
-            <h4 className="text-center">
-              {cart?.length
-                ? `You have ${cart.length} items in your cart ${
-                    auth?.token ? "" : "Please login to checkout"
-                  }`
-                : "Your cart is empty"}
-            </h4>
-          </div>
+    <Layout title="Your Cart">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">
+            {token ? `Hello, ${user?.name} 👋` : "Your Cart"}
+          </h1>
+          <p className="text-gray-500 mt-1">
+            {items.length > 0
+              ? `${items.length} item${items.length > 1 ? "s" : ""} in your cart`
+              : "Your cart is empty"}
+          </p>
         </div>
-        <div className="row">
-          <div className="col-md-8">
-            {cart?.map((p) => (
-              <div className="row  mb-2 card flex-row">
-                <div className="col-md-4">
+
+        {items.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-5xl mb-4">🛒</p>
+            <p className="text-gray-500 mb-4">Nothing here yet!</p>
+            <button onClick={() => navigate("/")} className="btn-primary">
+              Continue Shopping
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 flex flex-col gap-4">
+              {items.map((item) => (
+                <div
+                  key={item._id}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4"
+                >
                   <img
-                    src={`/api/v1/product/product-photo/${p._id}`}
-                    className="card-img-top"
-                    alt={p.name}
-                    width="100px"
-                    height={"200x"}
+                    src={productService.getPhotoUrl(item._id)}
+                    alt={item.name}
+                    className="w-24 h-24 object-contain rounded-lg bg-gray-50"
                   />
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-semibold text-gray-800">
+                        {item.name}
+                      </h4>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {truncate(item.description, 60)}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="font-bold text-primary">
+                        {formatPrice(item.price)}
+                      </span>
+                      <button
+                        onClick={() => dispatch(removeFromCart(item._id))}
+                        className="btn-danger text-xs px-3 py-1"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary */}
+            <div className="md:col-span-1">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-20">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">
+                  Order Summary
+                </h2>
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Subtotal ({items.length} items)</span>
+                  <span>{formatPrice(total)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600 mb-4">
+                  <span>Shipping</span>
+                  <span className="text-success font-medium">Free</span>
+                </div>
+                <hr className="mb-4" />
+                <div className="flex justify-between font-bold text-gray-800 text-base mb-6">
+                  <span>Total</span>
+                  <span className="text-primary">{formatPrice(total)}</span>
                 </div>
 
-                <div className="col-md-8">
-                  <p>{p.name}</p>
-                  <p>{p.description.substring(0, 30)}</p>
-                  <p>Price : {p.price}</p>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => removeCartItem(p._id)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="col-md-4 text-center">
-            <h2>Cart Summery</h2>
-            <p>Total | Checkout | Payment</p>
-            <hr />
-            <h4>Total : {totalPrice()}</h4>
-            {auth?.user?.address ? (
-              <>
-                <div className="mb-3">
-                  <h4>Current Address</h4>
-                  <h5>{auth?.user?.address}</h5>
-                  <button
-                    className="btn btn-outline-warning"
-                    onClick={() => navigate("/dashboard/user/profile")}
-                  >
-                    Update Address
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="mb-3">
-                {auth?.token ? (
-                  <button
-                    className="btn btn-outline-warning"
-                    onClick={() => navigate("/dashboard/user/profile")}
-                  >
-                    Update Address
-                  </button>
+                {/* Delivery address */}
+                {user?.address ? (
+                  <div className="bg-gray-50 rounded-xl p-3 mb-4 text-sm">
+                    <p className="font-medium text-gray-700 mb-1">
+                      Deliver to:
+                    </p>
+                    <p className="text-gray-600">{user.address}</p>
+                    <button
+                      onClick={() => navigate("/dashboard/user/profile")}
+                      className="text-primary text-xs mt-1 hover:underline"
+                    >
+                      Change address
+                    </button>
+                  </div>
                 ) : (
-                  <button
-                    className="btn btn-outline-warning"
-                    onClick={() =>
-                      navigate("/login", {
-                        state: "/cart",
-                      })
-                    }
-                  >
-                    Please login to checkout
+                  <div className="mb-4">
+                    {token ? (
+                      <button
+                        onClick={() => navigate("/dashboard/user/profile")}
+                        className="btn-outline w-full text-sm"
+                      >
+                        Add Delivery Address
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => navigate("/login", { state: "/cart" })}
+                        className="btn-primary w-full text-sm"
+                      >
+                        Login to Checkout
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {token && user?.address && (
+                  <button className="btn-primary w-full py-3">
+                    Proceed to Checkout
                   </button>
                 )}
               </div>
-            )}
-
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Layout>
   );

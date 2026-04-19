@@ -1,128 +1,105 @@
-import React, { useState, useEffect } from "react";
-import Layout from "../../components/Layout/Layout";
-import axios from "axios";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useCart } from "../context/cart";
+import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import Layout from "../../components/Layout/Layout";
+import ProductCard from "../../components/common/ProductCard";
+import productService from "../../api/productService";
+import { addToCart } from "../../store/slices/cartSlice";
+import { formatPrice } from "../../utils/formatters";
 
 const ProductDetails = () => {
-  const params = useParams();
-  const [product, setProduct] = useState(null); 
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  const { cart, setCart } = useCart();
+  const { slug }    = useParams();
+  const dispatch    = useDispatch();
+  const [product,  setProduct]  = useState(null);
+  const [related,  setRelated]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
-    if (params?.slug) getProduct();
-  }, [params?.slug]);
+    if (slug) fetchProduct();
+  }, [slug]);
 
-  const getProduct = async () => {
+  const fetchProduct = async () => {
+    setLoading(true);
     try {
-      const { data } = await axios.get(
-        `/api/v1/product/get-product/${params.slug}`
-      );
-
+      const { data } = await productService.getOne(slug);
       setProduct(data?.product);
-
       if (data?.product?._id && data?.product?.category?._id) {
-        getSimilarProduct(
+        const { data: rel } = await productService.getRelated(
           data.product._id,
           data.product.category._id
         );
+        setRelated(rel?.products || []);
       }
-
-    } catch (error) {
-      console.log(error);
+    } catch {
+      toast.error("Failed to load product");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getSimilarProduct = async (pid, cid) => {
-    try {
-      const { data } = await axios.get(
-        `/api/v1/product/related-product/${pid}/${cid}`
-      );
-      setRelatedProducts(data?.products || []); 
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  if (!product) {
+  if (loading) {
     return (
       <Layout>
-        <h2>Loading product details...</h2>
+        <div className="flex justify-center items-center h-64">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
       </Layout>
     );
   }
 
+  if (!product) {
+    return (
+      <Layout><p className="text-center py-16 text-gray-500">Product not found.</p></Layout>
+    );
+  }
+
   return (
-    <Layout>
-      <div className="row container">
-        <div className="col-md-6">
-          <img
-            src={`/api/v1/product/product-photo/${product._id}`}
-            className="card-img-top product-img"
-            alt={product.name}
-          />
-        </div>
-
-        <div className="col-md-5">
-          <h1 className="text-container">Product Details</h1>
-          <h6>Name: {product.name}</h6>
-          <h6>Description: {product.description}</h6>
-          <h6>Price: {product.price}</h6>
-          <h6>Category: {product.category?.name}</h6>
-
-          <button
-            type="button"
-            className="btn btn-secondary ms-1"
-            onClick={() => {
-              setCart((prevCart) => [...prevCart, product]);
-              toast.success("Item added to cart");
-            }}
-          >
-            Add to Cart
-          </button>
-        </div>
-      </div>
-
-      <hr />
-
-      <div className="row container">
-        <h1>Similar Products</h1>
-
-        {relatedProducts.length < 1 && (
-          <p className="text-container">No similar products found</p>
-        )}
-
-        <div className="d-flex flex-wrap">
-          {relatedProducts.map((p) => (
-            <div className="card m-2" style={{ width: "18rem" }} key={p._id}>
-              <img
-                src={`/api/v1/product/product-photo/${p._id}`}
-                className="card-img-top product-img"
-                alt={p.name}
-              />
-              <div className="card-body">
-                <h5 className="card-title">{p.name}</h5>
-                <p className="card-text">
-                  {p.description?.substring(0, 50)}...
-                </p>
-                <p className="card-text">$ {p.price}</p>
-
-                <button
-                  type="button"
-                  className="btn btn-secondary ms-1"
-                  onClick={() => {
-                    setCart((prevCart) => [...prevCart, p]);
-                    toast.success("Item added to cart");
-                  }}
-                >
-                  Add to Cart
-                </button>
-              </div>
+    <Layout title={product.name}>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Product detail */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-center bg-gray-50 rounded-xl p-6 min-h-64">
+            <img
+              src={productService.getPhotoUrl(product._id)}
+              alt={product.name}
+              className="max-h-72 object-contain"
+            />
+          </div>
+          <div className="flex flex-col justify-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-800">{product.name}</h1>
+            <span className="text-3xl font-bold text-primary">{formatPrice(product.price)}</span>
+            <span className="inline-block text-xs bg-blue-50 text-primary px-3 py-1 rounded-full w-fit font-medium">
+              {product.category?.name}
+            </span>
+            <p className="text-gray-600 leading-relaxed">{product.description}</p>
+            <div className="flex gap-3 mt-2">
+              <span className="text-sm text-gray-500">In stock: {product.quantity}</span>
+              <span className="text-sm text-gray-500">
+                Shipping: {product.shipping ? "✅ Yes" : "❌ No"}
+              </span>
             </div>
-          ))}
+            <button
+              onClick={() => {
+                dispatch(addToCart(product));
+                toast.success("Added to cart!");
+              }}
+              className="btn-primary py-3 mt-2 w-full md:w-auto"
+            >
+              Add to Cart
+            </button>
+          </div>
         </div>
+
+        {/* Related products */}
+        {related.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xl font-bold text-gray-800 mb-5">Similar Products</h2>
+            <div className="flex flex-wrap gap-4">
+              {related.map((p) => <ProductCard key={p._id} product={p} />)}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

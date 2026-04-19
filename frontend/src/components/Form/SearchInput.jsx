@@ -1,44 +1,43 @@
-import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useSearch } from "../../context/search";
-import axios from "axios";
+import {
+  setKeyword,
+  setResults,
+  selectKeyword,
+} from "../../store/slices/searchSlice";
+import productService from "../../api/productService";
+import { HiSearch } from "react-icons/hi";
 
 const SearchInput = () => {
-  const { search, setSearch } = useSearch();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const keyword  = useSelector(selectKeyword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!keyword.trim()) return;
     try {
-      const { data } = await axios.get(
-        `/api/v1/product/search/${search.keyword}`
-      );
-
-      setSearch({ ...search, results: data.products });
+      const { data } = await productService.search(keyword.trim());
+      dispatch(setResults(data.products || []));
       navigate("/search");
     } catch (error) {
-      console.log("Search error:", error);
+      console.error("Search error:", error);
     }
   };
 
   return (
-    <div>
-      <form className="d-flex" role="search" onSubmit={handleSubmit}>
-        <input
-          className="form-control me-2"
-          type="search"
-          placeholder="Search"
-          aria-label="Search"
-          value={search.keyword}
-          onChange={(e) =>
-            setSearch({ ...search, keyword: e.target.value })
-          }
-        />
-        <button className="btn btn-outline-success" type="submit">
-          Search
-        </button>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} className="flex items-center gap-1">
+      <input
+        type="search"
+        value={keyword}
+        onChange={(e) => dispatch(setKeyword(e.target.value))}
+        placeholder="Search products..."
+        className="input-field w-44 md:w-56 text-sm"
+      />
+      <button type="submit" className="btn-primary p-2">
+        <HiSearch className="text-lg" />
+      </button>
+    </form>
   );
 };
 

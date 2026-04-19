@@ -1,70 +1,60 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import Layout from "../../components/Layout/Layout";
-import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import ProductCard from "../../components/common/ProductCard";
+import productService from "../../api/productService";
 
 const CategoryProduct = () => {
-  const params = useParams();
-  const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [category, setCategory] = useState(null);
+  const { slug } = useParams();
+  const [products,  setProducts]  = useState([]);
+  const [category,  setCategory]  = useState(null);
+  const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
-    if (params?.slug) getProductsByCategory();
-  }, [params?.slug]);
+    if (slug) fetchProducts();
+  }, [slug]);
 
-  const getProductsByCategory = async () => {
+  const fetchProducts = async () => {
+    setLoading(true);
     try {
-      const { data } = await axios.get(
-        `/api/v1/product/product-category/${params.slug}`
-      );
-      setProducts(data?.products);
-      setCategory(data?.category);
-    } catch (error) {
-      console.log(error);
+      const { data } = await productService.getByCategory(slug);
+      setProducts(data?.products || []);
+      setCategory(data?.category || null);
+    } catch {
+      toast.error("Failed to load category products");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Layout>
-      <div className="container mt-3">
-        <h4 className="text-center">Category - {category?.name}</h4>
-        <h6 className="text-center">{products?.length} result found</h6>
-        <div className="row">
-          <div className="col-md-9 offset-1">
-            <div className="d-flex flex-wrap">
-              {products.map((p) => (
-                <div
-                  className="card m-2"
-                  style={{ width: "18rem" }}
-                  key={p._id}
-                >
-                  <img
-                    src={`/api/v1/product/product-photo/${p._id}`}
-                    className="card-img-top product-img"
-                    alt={p.name}
-                  />
-                  <div className="card-body">
-                    <h5 className="card-title">{p.name}</h5>
-                    <p className="card-text">
-                      {p.description?.substring(0, 50)}...
-                    </p>
-                    <p className="card-text">$ {p.price}</p>
-                    <button
-                      className="btn btn-primary ms-1"
-                      onClick={() => navigate(`/product/${p.slug}`)}
-                    >
-                      More Details
-                    </button>
-                    <button className="btn btn-secondary ms-1">
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+    <Layout title={category ? `${category.name} Products` : "Category"}>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">
+            {category?.name || "Category"}
+          </h1>
+          <p className="text-gray-500 mt-1">
+            {products.length} product{products.length !== 1 ? "s" : ""} found
+          </p>
         </div>
+
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : products.length === 0 ? (
+          <p className="text-center text-gray-500 py-16">
+            No products in this category yet.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-4 justify-center">
+            {products.map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );

@@ -1,25 +1,25 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import categoryService from "../api/categoryService";
 
-export default function useCategory() {
+const useCategory = () => {
   const [categories, setCategories] = useState([]);
 
-  const getCategories = async () => {
-    try {
-      const { data } = await axios.get("/api/v1/category/get-category");
-      
-      if (data?.success) {
-        setCategories(data?.category || data?.getCategory || []);
-      }
-    } catch (error) {
-      console.log(error);
-      setCategories([]); 
-    }
-  };
-
   useEffect(() => {
-    getCategories();
+    const fetchCategories = async () => {
+      try {
+        const { data } = await categoryService.getAll();
+        if (data?.success) {
+          setCategories(data.category || []);
+        }
+      } catch (error) {
+        console.error("useCategory error:", error);
+        setCategories([]);
+      }
+    };
+    fetchCategories();
   }, []);
 
   return categories;
-}
+};
+
+export default useCategory;

@@ -1,150 +1,135 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import Layout from "../../components/Layout/Layout";
 import UserMenu from "../../components/Layout/UserMenu";
-import { useAuth } from "../../context/auth";
-import toast from "react-hot-toast";
-import axios from "axios";
+import authService from "../../api/authService";
+import { selectCurrentUser, updateUser } from "../../store/slices/authSlice";
 
 const Profile = () => {
-  const { auth, setAuth } = useAuth();
+  const dispatch = useDispatch();
+  const user = useSelector(selectCurrentUser);
+  const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    address: "",
+  });
 
-  //Get user data
   useEffect(() => {
-    const { email, name, phone, address } = auth?.user;
-    setName(name);
-    setPhone(phone);
-    setEmail(email);
-    setAddress(address);
-  }, [auth?.user]);
+    if (user) {
+      setForm({
+        name: user.name || "",
+        email: user.email || "",
+        password: "",
+        phone: user.phone || "",
+        address: user.address || "",
+      });
+    }
+  }, [user]);
+
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const { data } = await axios.put("/api/v1/auth/profile", {
-        name,
-        email,
-        password,
-        phone,
-        address,
-      });
+      const { data } = await authService.updateProfile(form);
       if (data?.error) {
-        toast.error(data?.error);
+        toast.error(data.error);
       } else {
-        setAuth({ ...auth, user: data?.updatedUser });
-        let ls = localStorage.getItem("auth");
-        ls = JSON.parse(ls);
-        ls.user = data.updatedUser;
-        localStorage.setItem("auth", JSON.stringify(ls));
-        toast.success("Profile updated successfully");
+        dispatch(updateUser(data.updatedUser));
+        toast.success("Profile updated!");
+        setForm((prev) => ({ ...prev, password: "" }));
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
       toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const fields = [
+    { name: "name", label: "Full Name", type: "text", placeholder: "John Doe" },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "john@example.com",
+    },
+    {
+      name: "password",
+      label: "New Password (optional)",
+      type: "password",
+      placeholder: "Leave blank to keep current",
+      required: false,
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text",
+      placeholder: "+1 234 567 890",
+    },
+    {
+      name: "address",
+      label: "Address",
+      type: "text",
+      placeholder: "123 Main St",
+    },
+  ];
+
   return (
-    <Layout title={"Your Profile"}>
-      <div className="container-flui p-3 m-3">
-        <div className="row">
-          <div className="col-md-3">
+    <Layout title="My Profile">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1">
             <UserMenu />
           </div>
-          <div className="col-md-9">
-            <h1>
-              <div className="register">
-                <h1>User Profile</h1>
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-3">
-                    <label htmlFor="exampleInputName" className="form-label fs-6">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="form-control form-control-sm"
-                      id="exampleInputName1"
-                      placeholder="Enter Your Name"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="exampleInputEmail" className="form-label fs-6">
-                      Email
-                    </label>
-                    <input
-                      type="text"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="form-control"
-                      id="exampleInputEmail1"
-                      placeholder="Enter Your Email Address"
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label
-                      htmlFor="exampleInputPassword1"
-                      className="form-label fs-6"
-                    >
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="form-control"
-                      id="exampleInputPassword1"
-                      placeholder="Enter Strong Password"
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="exampleInputPhone" className="form-label fs-6">
-                      Phone
-                    </label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="form-control"
-                      id="exampleInputPhone1"
-                      placeholder="Enter Your Phone Number"
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="exampleInputAddress" className="form-label fs-6">
-                      Address
-                    </label>
-                    <input
-                      type="text"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="form-control"
-                      id="exampleInputAddress1"
-                      placeholder="Enter Your Address"
-                      required
-                    />
-                  </div>
-
-                  <button type="submit" className="btn btn-primary">
-                    Upadate
-                  </button>
-                </form>
-              </div>
-            </h1>
+          <div className="md:col-span-3">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">
+                Edit Profile
+              </h2>
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col gap-4 max-w-md"
+              >
+                {fields.map(
+                  ({ name, label, type, placeholder, required = true }) => (
+                    <div key={name}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {label}
+                      </label>
+                      <input
+                        type={type}
+                        name={name}
+                        value={form[name]}
+                        onChange={handleChange}
+                        placeholder={placeholder}
+                        className="input-field"
+                        required={required}
+                      />
+                    </div>
+                  ),
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary py-3 mt-2"
+                >
+                  {loading ? "Saving..." : "Save Changes"}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </Layout>
   );
 };
+
 export default Profile;
