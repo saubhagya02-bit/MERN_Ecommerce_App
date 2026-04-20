@@ -1,6 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+const savedAuth = JSON.parse(localStorage.getItem("auth") || "null");
+const isAdmin = savedAuth?.user?.role === 1;
+const savedCart = isAdmin
+  ? []
+  : JSON.parse(localStorage.getItem("cart") || "[]");
 
 const cartSlice = createSlice({
   name: "cart",

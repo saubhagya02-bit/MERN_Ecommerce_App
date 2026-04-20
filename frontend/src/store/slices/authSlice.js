@@ -16,6 +16,10 @@ const authSlice = createSlice({
       state.user = user;
       state.token = token;
       localStorage.setItem("auth", JSON.stringify({ user, token }));
+
+      if (user?.role === 1) {
+        localStorage.removeItem("cart");
+      }
     },
     updateUser: (state, action) => {
       state.user = action.payload;
@@ -27,6 +31,8 @@ const authSlice = createSlice({
       state.user = null;
       state.token = "";
       localStorage.removeItem("auth");
+
+      localStorage.removeItem("cart");
     },
   },
 });

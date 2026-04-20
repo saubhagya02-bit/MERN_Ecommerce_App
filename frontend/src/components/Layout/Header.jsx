@@ -20,6 +20,7 @@ const Header = () => {
   const isAdmin = useSelector(selectIsAdmin);
   const cartCount = useSelector(selectCartCount);
   const categories = useCategory();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
@@ -33,6 +34,7 @@ const Header = () => {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-sm">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+        {/* Brand */}
         <NavLink
           to="/"
           className="text-xl font-bold tracking-widest text-primary"
@@ -50,7 +52,6 @@ const Header = () => {
             Home
           </NavLink>
 
-          {/* Categories dropdown */}
           <div className="relative">
             <button
               onClick={() => setCatOpen((o) => !o)}
@@ -97,12 +98,22 @@ const Header = () => {
             <div className="relative">
               <button
                 onClick={() => setUserOpen((o) => !o)}
-                className="text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
               >
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                    isAdmin
+                      ? "bg-purple-100 text-purple-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {isAdmin ? "Admin" : "User"}
+                </span>
                 {user.name} ▾
               </button>
+
               {userOpen && (
-                <div className="absolute top-8 right-0 bg-white rounded-xl shadow-lg border border-gray-100 min-w-[160px] py-2 z-50">
+                <div className="absolute top-9 right-0 bg-white rounded-xl shadow-lg border border-gray-100 min-w-[160px] py-2 z-50">
                   <Link
                     to={isAdmin ? "/dashboard/admin" : "/dashboard/user"}
                     onClick={() => setUserOpen(false)}
@@ -112,7 +123,7 @@ const Header = () => {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-red-50"
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50"
                   >
                     Logout
                   </button>
@@ -121,15 +132,15 @@ const Header = () => {
             </div>
           )}
 
-          {/* Cart */}
-          <NavLink to="/cart">
-            <Badge count={cartCount} showZero>
-              <HiShoppingCart className="text-2xl text-gray-700 hover:text-primary transition-colors" />
-            </Badge>
-          </NavLink>
+          {!isAdmin && (
+            <NavLink to="/cart">
+              <Badge count={cartCount} showZero>
+                <HiShoppingCart className="text-2xl text-gray-700 hover:text-primary transition-colors" />
+              </Badge>
+            </NavLink>
+          )}
         </div>
 
-        {/* Mobile toggle */}
         <button
           className="md:hidden text-2xl text-gray-700"
           onClick={() => setMenuOpen((o) => !o)}
@@ -138,7 +149,6 @@ const Header = () => {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 flex flex-col gap-3">
           <SearchInput />
@@ -156,6 +166,7 @@ const Header = () => {
           >
             Categories
           </NavLink>
+
           {!user ? (
             <>
               <NavLink
@@ -184,19 +195,22 @@ const Header = () => {
               </NavLink>
               <button
                 onClick={handleLogout}
-                className="text-left text-sm text-danger"
+                className="text-left text-sm text-red-500"
               >
                 Logout
               </button>
             </>
           )}
-          <NavLink
-            to="/cart"
-            onClick={() => setMenuOpen(false)}
-            className="text-sm text-gray-700"
-          >
-            Cart ({cartCount})
-          </NavLink>
+
+          {!isAdmin && (
+            <NavLink
+              to="/cart"
+              onClick={() => setMenuOpen(false)}
+              className="text-sm text-gray-700"
+            >
+              Cart ({cartCount})
+            </NavLink>
+          )}
         </div>
       )}
     </nav>
