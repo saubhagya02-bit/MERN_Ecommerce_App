@@ -5,13 +5,16 @@ import { Provider } from "react-redux";
 import store from "./store/store";
 import App from "./App";
 import "./styles/index.css";
+import { HelmetProvider } from "react-helmet-async";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <HelmetProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </HelmetProvider>
     </Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
