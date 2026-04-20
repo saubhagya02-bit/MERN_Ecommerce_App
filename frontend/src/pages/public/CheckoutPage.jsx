@@ -6,6 +6,7 @@ import { selectCartItems, selectCartTotal } from "../../store/slices/cartSlice";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { formatPrice } from "../../utils/formatters";
 import productService from "../../api/productService";
+import { HiArrowLeft } from "react-icons/hi";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -20,7 +21,6 @@ const CheckoutPage = () => {
       alert("Please enter a delivery address.");
       return;
     }
-
     navigate("/payment", { state: { address } });
   };
 
@@ -40,12 +40,52 @@ const CheckoutPage = () => {
   return (
     <Layout title="Checkout — EShop">
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-8">Checkout</h1>
+        <div className="flex items-center gap-3 mb-8">
+          <button
+            onClick={() => navigate("/cart")}
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:shadow"
+          >
+            <HiArrowLeft className="text-base" />
+            Back to Cart
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">Checkout</h1>
+        </div>
+
+        <div className="flex items-center gap-2 mb-8 text-sm">
+          <span className="flex items-center gap-1 text-gray-400">
+            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
+              ✓
+            </span>
+            Cart
+          </span>
+          <span className="flex-1 h-px bg-gray-200" />
+          <span className="flex items-center gap-1 text-primary font-semibold">
+            <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
+              2
+            </span>
+            Checkout
+          </span>
+          <span className="flex-1 h-px bg-gray-200" />
+          <span className="flex items-center gap-1 text-gray-400">
+            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
+              3
+            </span>
+            Payment
+          </span>
+          <span className="flex-1 h-px bg-gray-200" />
+          <span className="flex items-center gap-1 text-gray-400">
+            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
+              4
+            </span>
+            Done
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Order Summary ({cartItems.length} items)
+              Order Summary ({cartItems.length} item
+              {cartItems.length !== 1 ? "s" : ""})
             </h2>
 
             <div className="flex flex-col gap-4 mb-6">
