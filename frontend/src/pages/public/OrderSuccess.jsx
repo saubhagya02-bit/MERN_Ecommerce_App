@@ -28,13 +28,15 @@ const OrderSuccess = () => {
   if (!order) return null;
 
   const handleContinue = () => {
-    dispatch(clearCurrentOrder());
     navigate("/");
+
+    setTimeout(() => dispatch(clearCurrentOrder()), 100);
   };
 
   const handleViewOrders = () => {
-    dispatch(clearCurrentOrder());
     navigate("/dashboard/user/orders");
+
+    setTimeout(() => dispatch(clearCurrentOrder()), 100);
   };
 
   return (
