@@ -5,12 +5,14 @@ import toast from "react-hot-toast";
 import Layout from "../../components/Layout/Layout";
 import authService from "../../api/authService";
 import { setCredentials } from "../../store/slices/authSlice";
+import { loadUserCart } from "../../store/slices/cartSlice";
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ email: "", password: "" });
+
+  const [form,    setForm]    = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
@@ -22,7 +24,15 @@ const Login = () => {
     try {
       const { data } = await authService.login(form);
       if (data?.success) {
+        
         dispatch(setCredentials({ user: data.user, token: data.token }));
+
+       
+        dispatch(loadUserCart({
+          userId: data.user._id,
+          role:   data.user.role,
+        }));
+
         toast.success("Login successful!");
         navigate(location.state || "/");
       } else {
@@ -36,7 +46,7 @@ const Login = () => {
   };
 
   return (
-    <Layout title="Login">
+    <Layout title="Login — EShop">
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-md">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">

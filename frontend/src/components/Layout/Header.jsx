@@ -8,6 +8,7 @@ import {
   selectCurrentUser,
   selectIsAdmin,
 } from "../../store/slices/authSlice";
+import { resetCart } from "../../store/slices/cartSlice";
 import { selectCartCount } from "../../store/slices/cartSlice";
 import useCategory from "../../hooks/useCategory";
 import SearchInput from "../Form/SearchInput";
@@ -27,6 +28,7 @@ const Header = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(resetCart());
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -34,7 +36,6 @@ const Header = () => {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-sm">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-        {/* Brand */}
         <NavLink
           to="/"
           className="text-xl font-bold tracking-widest text-primary"
