@@ -5,6 +5,7 @@ const links = [
   { to: "/dashboard/admin/create-product", label: "Create Product" },
   { to: "/dashboard/admin/products", label: "Products" },
   { to: "/dashboard/admin/users", label: "Users" },
+  { to: "/dashboard/admin/orders", label: "Orders" }
 ];
 
 const AdminMenu = () => (
