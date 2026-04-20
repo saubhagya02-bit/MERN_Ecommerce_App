@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loadStripe } from "@stripe/stripe-js";
+import { HiArrowLeft } from "react-icons/hi";
 import {
   Elements,
   CardNumberElement,
@@ -192,7 +193,46 @@ const PaymentPage = () => {
   return (
     <Layout title="Payment — EShop">
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-8">Payment</h1>
+        <div className="flex items-center gap-3 mb-8">
+          <button
+            onClick={() => navigate("/checkout")}
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:shadow"
+          >
+            <HiArrowLeft className="text-base" />
+            Back to Checkout
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">Payment</h1>
+        </div>
+
+        <div className="flex items-center gap-2 mb-8 text-sm">
+          <span className="flex items-center gap-1 text-gray-400">
+            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
+              ✓
+            </span>
+            Cart
+          </span>
+          <span className="flex-1 h-px bg-gray-200" />
+          <span className="flex items-center gap-1 text-gray-400">
+            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
+              ✓
+            </span>
+            Checkout
+          </span>
+          <span className="flex-1 h-px bg-gray-200" />
+          <span className="flex items-center gap-1 text-primary font-semibold">
+            <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
+              3
+            </span>
+            Payment
+          </span>
+          <span className="flex-1 h-px bg-gray-200" />
+          <span className="flex items-center gap-1 text-gray-400">
+            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
+              4
+            </span>
+            Done
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
