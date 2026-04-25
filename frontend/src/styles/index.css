@@ -1,8 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 @layer base {
   * {
@@ -10,7 +10,6 @@
     margin: 0;
     padding: 0;
   }
-
   body {
     font-family: "Inter", sans-serif;
     @apply bg-gray-50 text-gray-900;
@@ -19,32 +18,37 @@
 
 @layer components {
   .btn-primary {
-    @apply text-white px-4 py-2 rounded-lg font-medium transition-colors;
-    background-color: #2563eb; /* FIXED instead of bg-primary */
+    @apply bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
-
   .btn-secondary {
     @apply bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors;
   }
-
   .btn-danger {
-    @apply text-white px-4 py-2 rounded-lg font-medium transition-colors;
-    background-color: #dc2626; /* FIXED */
+    @apply bg-danger text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors;
   }
-
   .btn-outline {
-    @apply border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-600 hover:text-white transition-colors;
+    @apply border-2 border-primary text-primary px-4 py-2 rounded-lg font-medium hover:bg-primary hover:text-white transition-colors;
   }
-
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent;
+    @apply w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition;
   }
-
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow;
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow;
   }
-
   .page-title {
     @apply text-2xl font-bold text-gray-800 mb-6;
   }
+}
+
+/* Banner slide animation */
+@keyframes slide {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-25%); }
+  50%  { transform: translateX(-50%); }
+  75%  { transform: translateX(-75%); }
+  100% { transform: translateX(0); }
+}
+
+.banner-slider {
+  animation: slide 14s infinite;
 }

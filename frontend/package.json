@@ -1,6 +1,7 @@
 {
   "name": "frontend",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "homepage": "https://saubhagya02-bit.github.io/MERN_Ecommerce_App",
   "proxy": "http://localhost:8080",

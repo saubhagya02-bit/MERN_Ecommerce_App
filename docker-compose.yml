@@ -1,0 +1,59 @@
+services:
+
+  #  MongoDB 
+  mongo:
+    image: mongo:6
+    container_name: eshop_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - elitemart_network
+
+  #  Backend ─
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: elitemart_backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      MONGO_URL: mongodb://mongo:27017/eshop
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8080
+      DEV_MODE: ${DEV_MODE}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+    depends_on:
+      - mongo
+    networks:
+      - elitemart_network
+
+  #  Frontend 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
+    container_name: elitemart_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - elitemart_network
+
+#  Volumes 
+volumes:
+  mongo_data:
+    driver: local
+
+#  Networks 
+networks:
+  elitemart_network:
+    driver: bridge
