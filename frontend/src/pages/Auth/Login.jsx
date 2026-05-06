@@ -12,7 +12,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [form,    setForm]    = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
@@ -24,14 +24,14 @@ const Login = () => {
     try {
       const { data } = await authService.login(form);
       if (data?.success) {
-        
         dispatch(setCredentials({ user: data.user, token: data.token }));
 
-       
-        dispatch(loadUserCart({
-          userId: data.user._id,
-          role:   data.user.role,
-        }));
+        dispatch(
+          loadUserCart({
+            userId: data.user._id,
+            role: data.user.role,
+          }),
+        );
 
         toast.success("Login successful!");
         navigate(location.state || "/");
