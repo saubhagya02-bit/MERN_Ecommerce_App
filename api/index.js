@@ -27,6 +27,8 @@ app.use(
     credentials: true,
   }),
 );
+
+module.exports = app;
 app.use(express.json());
 app.use(morgan("dev"));
 
