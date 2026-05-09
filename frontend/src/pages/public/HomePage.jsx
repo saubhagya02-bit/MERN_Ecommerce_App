@@ -111,7 +111,7 @@ const HomePage = () => {
   };
 
   return (
-    <Layout title="EShop — All Products">
+    <Layout title="EliteMart — All Products">
       <div className="relative w-full h-[60vh] overflow-hidden">
         {BANNERS.map((src, i) => (
           <img
