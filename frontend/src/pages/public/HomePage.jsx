@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Radio } from "antd";
 import toast from "react-hot-toast";
 import Layout from "../../components/Layout/Layout";
@@ -11,26 +11,31 @@ import clothBanner from "../../assets/images/Cloth-banner.png";
 import cosmaticsBanner from "../../assets/images/Cosmatics-banner.png";
 import electronicsBanner from "../../assets/images/Electronics-banner.png";
 
-// Banner images 
+// Banner images
 const BANNERS = [
   "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=80",
   "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1400&q=80",
   accessoriesBanner,
   clothBanner,
   cosmaticsBanner,
-  electronicsBanner
-  
+  electronicsBanner,
 ];
+
+const PER_PAGE = 6;
 
 const HomePage = () => {
   const categories = useCategory();
+
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [checked, setChecked] = useState([]);
   const [radio, setRadio] = useState(null);
   const [bannerIdx, setBannerIdx] = useState(0);
+
+  const isFiltered = checked.length > 0 || radio !== null;
 
   useEffect(() => {
     const t = setInterval(
@@ -40,39 +45,73 @@ const HomePage = () => {
     return () => clearInterval(t);
   }, []);
 
-  const fetchProducts = async (pageNum = 1, append = false) => {
-    setLoading(true);
-    try {
-      const { data } = await productService.getList(pageNum);
-      setProducts((prev) =>
-        append ? [...prev, ...data.products] : data.products || [],
-      );
-    } catch {
-      toast.error("Failed to load products");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchTotal = async () => {
-    const { data } = await productService.getCount();
-    setTotal(data?.total || 0);
-  };
-
-  const filterProducts = async (pageNum = 1, append = false) => {
-    setLoading(true);
     try {
-      const { data } = await productService.filter(checked, radio);
-      setProducts((prev) =>
-        append ? [...prev, ...data.products] : data.products || [],
-      );
+      const { data } = await productService.getCount();
+      setTotal(data?.total || 0);
     } catch {
-      toast.error("Filter failed");
-    } finally {
-      setLoading(false);
+      console.error("Failed to fetch total");
     }
   };
 
+  const fetchProducts = useCallback(
+    async (pageNum = 1, append = false) => {
+      setLoading(true);
+      try {
+        const { data } = await productService.getList(pageNum);
+        const newProducts = data?.products || [];
+
+        setProducts((prev) =>
+          append ? [...prev, ...newProducts] : newProducts,
+        );
+
+        setHasMore(
+          append
+            ? products.length + newProducts.length < total
+            : newProducts.length < total,
+        );
+      } catch {
+        toast.error("Failed to load products");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [total, products.length],
+  );
+
+  const fetchFiltered = useCallback(
+    async (pageNum = 1, append = false) => {
+      setLoading(true);
+      try {
+        const { data } = await productService.filter(
+          checked,
+          radio,
+          pageNum,
+          PER_PAGE,
+        );
+        const newProducts = data?.products || [];
+        const filteredTotal = data?.total || newProducts.length;
+
+        setProducts((prev) =>
+          append ? [...prev, ...newProducts] : newProducts,
+        );
+
+        const loadedSoFar = append
+          ? products.length + newProducts.length
+          : newProducts.length;
+
+        setHasMore(loadedSoFar < filteredTotal);
+        setTotal(filteredTotal);
+      } catch {
+        toast.error("Filter failed");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [checked, radio, products.length],
+  );
+
+  // Initial load
   useEffect(() => {
     fetchProducts(1);
     fetchTotal();
@@ -80,38 +119,43 @@ const HomePage = () => {
 
   useEffect(() => {
     setPage(1);
-    if (checked.length || radio) {
-      filterProducts(1);
+    setProducts([]);
+    if (isFiltered) {
+      fetchFiltered(1, false);
     } else {
-      fetchProducts(1);
+      fetchProducts(1, false);
+      fetchTotal();
     }
   }, [checked, radio]);
 
+  //  Load More
+  const handleLoadMore = () => {
+    const next = page + 1;
+    setPage(next);
+    if (isFiltered) {
+      fetchFiltered(next, true);
+    } else {
+      fetchProducts(next, true);
+    }
+  };
+
+  //  Handlers
   const handleCategoryCheck = (id, value) => {
     setChecked((prev) =>
       value ? [...prev, id] : prev.filter((c) => c !== id),
     );
   };
 
-  const handleLoadMore = async () => {
-    const next = page + 1;
-    setPage(next);
-    if (checked.length || radio) {
-      filterProducts(next, true);
-    } else {
-      fetchProducts(next, true);
-    }
-  };
-
   const resetFilters = () => {
     setChecked([]);
     setRadio(null);
     setPage(1);
-    fetchProducts(1);
+    setProducts([]);
   };
 
   return (
     <Layout title="EliteMart — All Products">
+      {/* Hero Banner */}
       <div className="relative w-full h-[60vh] overflow-hidden">
         {BANNERS.map((src, i) => (
           <img
@@ -123,7 +167,6 @@ const HomePage = () => {
             }`}
           />
         ))}
-
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-center px-4">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
             Welcome to EliteMart
@@ -132,7 +175,6 @@ const HomePage = () => {
             Tech, fashion, home &amp; more — shop faster, live better.
           </p>
         </div>
-
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
           {BANNERS.map((_, i) => (
             <button
@@ -146,11 +188,16 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Filters sidebar */}
           <aside className="md:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sticky top-20">
-              <h3 className="font-bold text-gray-800 mb-4">Filter by Price</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 sticky top-20">
+              {/* Price filter */}
+              <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4">
+                Filter by Price
+              </h3>
               <Radio.Group
                 value={radio}
                 onChange={(e) => setRadio(e.target.value)}
@@ -160,21 +207,22 @@ const HomePage = () => {
                   <Radio
                     key={p._id}
                     value={p.array}
-                    className="text-sm text-gray-600"
+                    className="text-sm text-gray-600 dark:text-gray-300"
                   >
                     {p.name}
                   </Radio>
                 ))}
               </Radio.Group>
 
-              <h3 className="font-bold text-gray-800 mt-6 mb-3">
+              {/* Category filter */}
+              <h3 className="font-bold text-gray-800 dark:text-gray-100 mt-6 mb-3">
                 Filter by Category
               </h3>
               <div className="flex flex-col gap-2">
                 {categories.map((c) => (
                   <label
                     key={c._id}
-                    className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"
+                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -198,10 +246,33 @@ const HomePage = () => {
             </div>
           </aside>
 
+          {/* Product grid */}
           <div className="md:col-span-3">
-            <h2 className="text-xl font-bold text-gray-800 mb-5">
-              All Products
-            </h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                {isFiltered
+                  ? `Filtered Products (${total})`
+                  : `All Products (${total})`}
+              </h2>
+              {isFiltered && (
+                <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
+                  Filters active
+                </span>
+              )}
+            </div>
+
+            {loading && products.length === 0 && (
+              <div className="flex flex-wrap gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-64 h-80 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Products */}
             <div className="flex flex-wrap gap-4">
               {products.map((p) => (
                 <ProductCard key={p._id} product={p} />
@@ -209,21 +280,41 @@ const HomePage = () => {
             </div>
 
             {products.length === 0 && !loading && (
-              <p className="text-gray-500 text-center py-16">
-                No products found.
-              </p>
+              <div className="text-center py-16">
+                <p className="text-5xl mb-4">🔍</p>
+                <p className="text-gray-500 dark:text-gray-400">
+                  No products found for this filter.
+                </p>
+                <button onClick={resetFilters} className="btn-primary mt-4">
+                  Clear Filters
+                </button>
+              </div>
             )}
 
-            {products.length < total && (
+            {/* Load More button */}
+            {hasMore && (
               <div className="flex justify-center mt-8">
                 <button
                   onClick={handleLoadMore}
                   disabled={loading}
                   className="btn-outline px-8 py-3"
                 >
-                  {loading ? "Loading..." : "Load More"}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Loading...
+                    </span>
+                  ) : (
+                    "Load More"
+                  )}
                 </button>
               </div>
+            )}
+
+            {!hasMore && products.length > 0 && (
+              <p className="text-center text-gray-400 dark:text-gray-500 text-sm mt-8">
+                ✅ All {products.length} products loaded
+              </p>
             )}
           </div>
         </div>
