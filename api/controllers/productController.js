@@ -107,12 +107,11 @@ export const getSingleProductController = async (req, res) => {
 //Get photo
 export const productPhotoController = async (req, res) => {
   try {
-    const product = await productModel.findById(req.params.pid).select("photo")
-        if (product.photo.data) {
-            res.set("Content-type", product.photo.contentType);
-            return res.status(200).send(product.photo.data);
-        }
-    
+    const product = await productModel.findById(req.params.pid).select("photo");
+    if (product.photo.data) {
+      res.set("Content-type", product.photo.contentType);
+      return res.status(200).send(product.photo.data);
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send({
@@ -123,15 +122,16 @@ export const productPhotoController = async (req, res) => {
   }
 };
 
-//Delete 
+//Delete
 export const deleteProductController = async (req, res) => {
   try {
-    const product = await productModel.findByIdAndDelete(req.params.pid).select("-photo")
-        res.status(200).send({
-            success: true,
-            message: 'Product deleted successfully',
-        });
-    
+    const product = await productModel
+      .findByIdAndDelete(req.params.pid)
+      .select("-photo");
+    res.status(200).send({
+      success: true,
+      message: "Product deleted successfully",
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send({
@@ -143,7 +143,7 @@ export const deleteProductController = async (req, res) => {
 };
 
 //Update product
-export const updateProductController = async(req, res) => {
+export const updateProductController = async (req, res) => {
   try {
     const { name, description, price, category, quantity, shipping } =
       req.fields;
@@ -164,9 +164,11 @@ export const updateProductController = async(req, res) => {
         return res.status(400).send({ error: "Photo should be less than 1MB" });
     }
 
-    const product = await productModel.findByIdAndUpdate(req.params.pid,
-        {...req.fields, slug: slugify(name)}, {new: true}
-    )
+    const product = await productModel.findByIdAndUpdate(
+      req.params.pid,
+      { ...req.fields, slug: slugify(name) },
+      { new: true },
+    );
 
     if (photo) {
       product.photo.data = fs.readFileSync(photo.path);
@@ -199,7 +201,7 @@ export const productListController = async (req, res) => {
       .find({})
       .skip((page - 1) * perPage)
       .limit(perPage)
-      .select("-photo") 
+      .select("-photo")
       .sort({ createdAt: -1 });
 
     res.status(200).send({
@@ -240,7 +242,9 @@ export const productCategoryController = async (req, res) => {
   try {
     const category = await Category.findOne({ slug: req.params.slug });
     if (!category) {
-      return res.status(404).send({ success: false, message: "Category not found" });
+      return res
+        .status(404)
+        .send({ success: false, message: "Category not found" });
     }
 
     const products = await productModel
@@ -275,7 +279,9 @@ export const searchProductController = async (req, res) => {
     }
 
     // Search category
-    const category = await Category.findOne({ name: { $regex: searchKeyword, $options: "i" } });
+    const category = await Category.findOne({
+      name: { $regex: searchKeyword, $options: "i" },
+    });
 
     let query = {
       $or: [
@@ -313,7 +319,7 @@ export const relatedProductController = async (req, res) => {
       .select("-photo")
       .limit(4)
       .populate("category");
- 
+
     res.status(200).send({
       success: true,
       products,
@@ -327,24 +333,32 @@ export const relatedProductController = async (req, res) => {
     });
   }
 };
- 
-// Filter products by category checkboxes and price radio
+
 export const productFiltersController = async (req, res) => {
   try {
-    const { checked, radio } = req.body;
+    const { checked, radio, page = 1, perPage = 6 } = req.body;
+
     let args = {};
- 
+
     if (checked && checked.length > 0) {
       args.category = { $in: checked };
     }
     if (radio && radio.length === 2) {
       args.price = { $gte: radio[0], $lte: radio[1] };
     }
- 
-    const products = await productModel.find(args).select("-photo");
- 
+
+    const total = await productModel.countDocuments(args);
+
+    const products = await productModel
+      .find(args)
+      .select("-photo")
+      .skip((page - 1) * perPage)
+      .limit(perPage)
+      .sort({ createdAt: -1 });
+
     res.status(200).send({
       success: true,
+      total,
       products,
     });
   } catch (error) {
@@ -356,4 +370,3 @@ export const productFiltersController = async (req, res) => {
     });
   }
 };
-
