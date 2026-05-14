@@ -11,8 +11,15 @@ const productService = {
   getRelated: (pid, cid) =>
     axiosInstance.get(`/product/related-product/${pid}/${cid}`),
   search: (keyword) => axiosInstance.get(`/product/search/${keyword}`),
-  filter: (checked, radio) =>
-    axiosInstance.post("/product/product-filters", { checked, radio }),
+
+  filter: (checked, radio, page = 1, perPage = 6) =>
+    axiosInstance.post("/product/product-filters", {
+      checked,
+      radio,
+      page,
+      perPage,
+    }),
+
   create: (formData) => axiosInstance.post("/product/create-product", formData),
   update: (pid, formData) =>
     axiosInstance.put(`/product/update-product/${pid}`, formData),
