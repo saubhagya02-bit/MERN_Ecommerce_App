@@ -4,12 +4,12 @@ import Footer from "./Footer";
 
 const Layout = ({
   children,
-  title = "EShop",
+  title = "EliteMart",
   description = "MERN Stack Ecommerce",
   keywords = "MERN, React, MongoDB",
-  author = "EShop",
+  author = "EliteMart",
 }) => (
-  <div className="flex flex-col min-h-screen">
+  <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
     <Helmet>
       <meta charSet="utf-8" />
       <meta name="description" content={description} />
@@ -20,9 +20,7 @@ const Layout = ({
 
     <Header />
 
-    <main className="flex-1 pt-16">
-      {children}
-    </main>
+    <main className="flex-1 pt-16">{children}</main>
 
     <Footer />
   </div>
