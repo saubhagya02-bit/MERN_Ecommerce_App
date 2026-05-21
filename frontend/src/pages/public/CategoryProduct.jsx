@@ -7,9 +7,9 @@ import productService from "../../api/productService";
 
 const CategoryProduct = () => {
   const { slug } = useParams();
-  const [products,  setProducts]  = useState([]);
-  const [category,  setCategory]  = useState(null);
-  const [loading,   setLoading]   = useState(true);
+  const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (slug) fetchProducts();
@@ -49,7 +49,7 @@ const CategoryProduct = () => {
             No products in this category yet.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-4 justify-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map((p) => (
               <ProductCard key={p._id} product={p} />
             ))}

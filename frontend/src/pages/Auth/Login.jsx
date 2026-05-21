@@ -11,12 +11,11 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,15 +24,8 @@ const Login = () => {
       const { data } = await authService.login(form);
       if (data?.success) {
         dispatch(setCredentials({ user: data.user, token: data.token }));
-
-        dispatch(
-          loadUserCart({
-            userId: data.user._id,
-            role: data.user.role,
-          }),
-        );
-
-        toast.success("Login successful!");
+        dispatch(loadUserCart({ userId: data.user._id, role: data.user.role }));
+        toast.success("Welcome back!");
         navigate(location.state || "/");
       } else {
         toast.error(data?.message || "Login failed");
@@ -46,69 +38,88 @@ const Login = () => {
   };
 
   return (
-    <Layout title="Login — EShop">
-      <div className="min-h-[80vh] flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-md">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            Welcome Back 👋
-          </h1>
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                className="input-field"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                className="input-field"
-                required
-              />
-            </div>
-
-            <Link
-              to="/forgot-password"
-              className="text-sm text-primary hover:underline self-end"
+    <Layout title="Sign In — EliteMart">
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+        <div style={{ width: "100%", maxWidth: 420 }}>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <p
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "2rem",
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: "-0.02em",
+              }}
             >
-              Forgot password?
-            </Link>
+              Welcome back
+            </p>
+            <p className="mt-1 text-sm" style={{ color: "var(--ink-soft)" }}>
+              Sign in to your EliteMart account
+            </p>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary py-3"
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
+          <div className="panel">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="form-label">Email address</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="you@example.com"
+                  className="input-field"
+                  required
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="form-label" style={{ marginBottom: 0 }}>
+                    Password
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs transition-colors hover:underline"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="input-field"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary w-full py-3 mt-1"
+              >
+                {loading ? "Signing in…" : "Sign In"}
+              </button>
+            </form>
 
-          <p className="text-sm text-center text-gray-500 mt-4">
-            Don&apos;t have an account?{" "}
-            <Link
-              to="/register"
-              className="text-primary font-medium hover:underline"
+            <p
+              className="text-center text-sm mt-5"
+              style={{ color: "var(--ink-soft)" }}
             >
-              Register here
-            </Link>
-          </p>
+               Don&apos;t have an account?{" "}
+              <Link
+                to="/register"
+                className="font-semibold hover:underline"
+                style={{ color: "var(--accent)" }}
+              >
+                Register here
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

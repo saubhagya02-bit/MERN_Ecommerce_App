@@ -11,7 +11,7 @@ import { HiSearch } from "react-icons/hi";
 const SearchInput = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const keyword  = useSelector(selectKeyword);
+  const keyword = useSelector(selectKeyword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,22 +20,27 @@ const SearchInput = () => {
       const { data } = await productService.search(keyword.trim());
       dispatch(setResults(data.products || []));
       navigate("/search");
-    } catch (error) {
-      console.error("Search error:", error);
+    } catch (err) {
+      console.error("Search error:", err);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-1">
+    <form onSubmit={handleSubmit} className="flex items-center gap-1.5">
       <input
         type="search"
         value={keyword}
         onChange={(e) => dispatch(setKeyword(e.target.value))}
-        placeholder="Search products..."
-        className="input-field w-44 md:w-56 text-sm"
+        placeholder="Search products…"
+        className="input-field w-44 md:w-52 text-xs py-2"
       />
-      <button type="submit" className="btn-primary p-2">
-        <HiSearch className="text-lg" />
+      <button
+        type="submit"
+        className="btn-primary p-2 rounded-lg"
+        aria-label="Search"
+        style={{ minWidth: "2.25rem" }}
+      >
+        <HiSearch className="text-base" />
       </button>
     </form>
   );

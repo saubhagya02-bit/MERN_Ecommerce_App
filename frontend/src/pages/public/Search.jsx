@@ -8,24 +8,49 @@ const Search = () => {
   const keyword = useSelector(selectKeyword);
 
   return (
-    <Layout title="Search Results">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Search Results</h1>
-          <p className="text-gray-500 mt-1">
+    <Layout title={`Search: "${keyword}" — EliteMart`}>
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* Header */}
+        <div style={{ marginBottom: "2rem" }}>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.75rem",
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "-.02em",
+            }}
+          >
+            Search Results
+          </h1>
+          <p
+            style={{
+              marginTop: "0.35rem",
+              fontSize: 13,
+              color: "var(--ink-soft)",
+            }}
+          >
             {results.length === 0
               ? `No products found for "${keyword}"`
-              : `Found ${results.length} product${results.length > 1 ? "s" : ""} for "${keyword}"`}
+              : `${results.length} product${results.length !== 1 ? "s" : ""} found for "${keyword}"`}
           </p>
         </div>
 
         {results.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-5xl mb-4">🔍</p>
-            <p className="text-gray-500">Try a different keyword.</p>
+          <div style={{ textAlign: "center", padding: "5rem 0" }}>
+            <p style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>🔍</p>
+            <p style={{ color: "var(--ink-soft)", fontSize: 14 }}>
+              Try a different keyword or browse all products.
+            </p>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-4 justify-center">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))",
+              gap: 16,
+            }}
+          >
             {results.map((p) => (
               <ProductCard key={p._id} product={p} />
             ))}

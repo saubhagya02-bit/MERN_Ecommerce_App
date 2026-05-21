@@ -1,36 +1,53 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { selectToken } from "../../store/slices/authSlice";
+import { Outlet, Navigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectToken,
+  selectAuthVerified,
+  setAuthVerified,
+} from "../../store/slices/authSlice";
 import authService from "../../api/authService";
 import Spinner from "../common/Spinner";
 
 const PrivateRoute = () => {
-  const [ok, setOk]   = useState(false);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
   const token = useSelector(selectToken);
+
+  const verified = useSelector(selectAuthVerified);
+  const [loading, setLoading] = useState(verified === null);
 
   useEffect(() => {
     if (!token) {
-      setOk(false);
+      dispatch(setAuthVerified(false));
       setLoading(false);
       return;
     }
-    const check = async () => {
-      try {
-        const { data } = await authService.checkUserAuth();
-        setOk(data.ok);
-      } catch {
-        setOk(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    check();
+    if (verified !== null) {
+      setLoading(false);
+      return;
+    }
+
+    authService
+      .checkUserAuth()
+      .then(({ data }) => dispatch(setAuthVerified(!!data?.ok)))
+      .catch(() => dispatch(setAuthVerified(false)))
+      .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) return <Spinner path="login" />;
-  return ok ? <Outlet /> : <Spinner path="login" />;
+  if (loading)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+        }}
+      >
+        <div className="spinner" />
+      </div>
+    );
+  return verified ? <Outlet /> : <Navigate replace to="/login" />;
 };
 
 export default PrivateRoute;

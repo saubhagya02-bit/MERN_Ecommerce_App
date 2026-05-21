@@ -1,31 +1,28 @@
 import { NavLink } from "react-router-dom";
 
 const links = [
-  { to: "/dashboard/admin/create-category", label: "Create Category" },
-  { to: "/dashboard/admin/create-product", label: "Create Product" },
-  { to: "/dashboard/admin/products", label: "Products" },
-  { to: "/dashboard/admin/users", label: "Users" },
-  { to: "/dashboard/admin/orders", label: "Orders" }
+  { to: "/dashboard/admin", label: "Dashboard", icon: "▦" },
+  { to: "/dashboard/admin/create-category", label: "Categories", icon: "⊞" },
+  { to: "/dashboard/admin/create-product", label: "Add Product", icon: "+" },
+  { to: "/dashboard/admin/products", label: "Products", icon: "◫" },
+  { to: "/dashboard/admin/orders", label: "Orders", icon: "≡" },
+  { to: "/dashboard/admin/users", label: "Users", icon: "⊙" },
 ];
 
 const AdminMenu = () => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-    <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
-      Admin Panel
-    </h3>
-    <nav className="flex flex-col gap-2">
-      {links.map(({ to, label }) => (
+  <div className="panel">
+    <p className="label-xs mb-4">Admin Panel</p>
+    <nav className="flex flex-col gap-1">
+      {links.map(({ to, label, icon }) => (
         <NavLink
           key={to}
           to={to}
+          end={to === "/dashboard/admin"}
           className={({ isActive }) =>
-            `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isActive
-                ? "bg-primary text-white"
-                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
-            }`
+            `sidebar-link ${isActive ? "active" : ""}`
           }
         >
+          <span className="text-base leading-none w-4 text-center">{icon}</span>
           {label}
         </NavLink>
       ))}

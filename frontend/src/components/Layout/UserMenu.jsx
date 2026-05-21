@@ -1,28 +1,23 @@
 import { NavLink } from "react-router-dom";
 
 const links = [
-  { to: "/dashboard/user/profile", label: "Profile" },
-  { to: "/dashboard/user/orders", label: "Orders" },
+  { to: "/dashboard/user/profile", label: "Profile", icon: "⊙" },
+  { to: "/dashboard/user/orders", label: "Orders", icon: "≡" },
 ];
 
 const UserMenu = () => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-    <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
-      Dashboard
-    </h3>
-    <nav className="flex flex-col gap-2">
-      {links.map(({ to, label }) => (
+  <div className="panel">
+    <p className="label-xs mb-4">My Account</p>
+    <nav className="flex flex-col gap-1">
+      {links.map(({ to, label, icon }) => (
         <NavLink
           key={to}
           to={to}
           className={({ isActive }) =>
-            `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isActive
-                ? "bg-primary text-white"
-                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
-            }`
+            `sidebar-link ${isActive ? "active" : ""}`
           }
         >
+          <span className="text-base leading-none w-4 text-center">{icon}</span>
           {label}
         </NavLink>
       ))}

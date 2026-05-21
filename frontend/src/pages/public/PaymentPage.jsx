@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loadStripe } from "@stripe/stripe-js";
-import { HiArrowLeft } from "react-icons/hi";
+import { HiArrowLeft, HiLockClosed } from "react-icons/hi";
 import {
   Elements,
   CardNumberElement,
@@ -20,21 +20,66 @@ import {
 import { setCurrentOrder } from "../../store/slices/orderSlice";
 import orderService from "../../api/orderService";
 import { formatPrice } from "../../utils/formatters";
+import productService from "../../api/productService";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const ELEMENT_STYLE = {
   style: {
     base: {
-      fontSize: "15px",
-      color: "#1f2937",
-      fontFamily: "Inter, sans-serif",
-      "::placeholder": { color: "#9ca3af" },
+      fontSize: "14px",
+      color: "var(--ink)",
+      fontFamily: "'DM Sans', sans-serif",
+      "::placeholder": { color: "var(--ink-faint)" },
     },
-    invalid: { color: "#dc2626" },
+    invalid: { color: "var(--danger)" },
   },
 };
 
+const Step = ({ n, label, active, done }) => (
+  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <span
+      style={{
+        width: 26,
+        height: 26,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 11,
+        fontWeight: 700,
+        background: done
+          ? "var(--success)"
+          : active
+            ? "var(--accent)"
+            : "var(--stone)",
+        color: done || active ? "#fff" : "var(--ink-soft)",
+      }}
+    >
+      {done ? "✓" : n}
+    </span>
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: active ? 600 : 400,
+        color: active
+          ? "var(--accent)"
+          : done
+            ? "var(--ink-mid)"
+            : "var(--ink-faint)",
+      }}
+    >
+      {label}
+    </span>
+  </span>
+);
+const Divider = () => (
+  <span
+    style={{ flex: 1, height: 1, background: "var(--stone)", margin: "0 4px" }}
+  />
+);
+
+//  Payment form
 const PaymentForm = ({ clientSecret, deliveryAddress }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -42,28 +87,23 @@ const PaymentForm = ({ clientSecret, deliveryAddress }) => {
   const navigate = useNavigate();
   const cartItems = useSelector(selectCartItems);
   const cartTotal = useSelector(selectCartTotal);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
-
     setLoading(true);
     setError("");
 
     try {
       const { error: stripeError, paymentIntent } =
         await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: elements.getElement(CardNumberElement),
-          },
+          payment_method: { card: elements.getElement(CardNumberElement) },
         });
 
       if (stripeError) {
         setError(stripeError.message);
-        setLoading(false);
         return;
       }
 
@@ -73,13 +113,12 @@ const PaymentForm = ({ clientSecret, deliveryAddress }) => {
           deliveryAddress,
           paymentIntent.id,
         );
-
         if (data?.success) {
           dispatch(setCurrentOrder(data.order));
           dispatch(clearCart());
           navigate("/order-success");
         } else {
-          setError("Order saving failed. Contact support.");
+          setError("Order saving failed. Please contact support.");
         }
       }
     } catch (err) {
@@ -90,64 +129,116 @@ const PaymentForm = ({ clientSecret, deliveryAddress }) => {
     }
   };
 
+  const inputBox = {
+    background: "#fff",
+    border: "1.5px solid var(--stone)",
+    borderRadius: 8,
+    padding: "10px 14px",
+    transition: "border-color .2s",
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: "flex", flexDirection: "column", gap: 16 }}
+    >
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Card Number
-        </label>
-        <div className="input-field">
+        <label className="form-label">Card Number</label>
+        <div style={inputBox}>
           <CardNumberElement options={ELEMENT_STYLE} />
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Expiry Date
-          </label>
-          <div className="input-field">
+          <label className="form-label">Expiry Date</label>
+          <div style={inputBox}>
             <CardExpiryElement options={ELEMENT_STYLE} />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            CVC
-          </label>
-          <div className="input-field">
+          <label className="form-label">CVC</label>
+          <div style={inputBox}>
             <CardCvcElement options={ELEMENT_STYLE} />
           </div>
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-700">
-        <strong>Test card:</strong> 4242 4242 4242 4242 — Any future date — Any
+      {/* Test card hint */}
+      <div
+        style={{
+          background: "#EFF6FF",
+          border: "1px solid #DBEAFE",
+          borderRadius: 8,
+          padding: "10px 12px",
+          fontSize: 12,
+          color: "#1D4ED8",
+        }}
+      >
+        <strong>Test card:</strong> 4242 4242 4242 4242 — any future date — any
         3-digit CVC
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+        <div
+          style={{
+            background: "#FEF2F2",
+            border: "1px solid #FECACA",
+            borderRadius: 8,
+            padding: "10px 12px",
+            fontSize: 12,
+            color: "var(--danger)",
+          }}
+        >
           {error}
-        </p>
+        </div>
       )}
 
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="btn-primary py-3 text-base mt-1 flex items-center justify-center gap-2"
+        className="btn-primary"
+        style={{
+          padding: "13px 0",
+          fontSize: 15,
+          marginTop: 4,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+        }}
       >
         {loading ? (
           <>
-            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Processing...
+            <span
+              style={{
+                width: 16,
+                height: 16,
+                border: "2px solid rgba(255,255,255,.4)",
+                borderTopColor: "#fff",
+                borderRadius: "50%",
+                animation: "spin .7s linear infinite",
+                display: "inline-block",
+              }}
+            />
+            Processing…
           </>
         ) : (
           `Pay ${formatPrice(cartTotal)}`
         )}
       </button>
 
-      <p className="text-xs text-gray-400 text-center">
-        🔒 Payments are secured by Stripe
+      <p
+        style={{
+          fontSize: 11,
+          color: "var(--ink-faint)",
+          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 4,
+        }}
+      >
+        <HiLockClosed /> Payments are secured by Stripe
       </p>
     </form>
   );
@@ -158,7 +249,6 @@ const PaymentPage = () => {
   const location = useLocation();
   const cartItems = useSelector(selectCartItems);
   const cartTotal = useSelector(selectCartTotal);
-
   const [clientSecret, setClientSecret] = useState("");
   const [fetchError, setFetchError] = useState("");
 
@@ -174,115 +264,211 @@ const PaymentPage = () => {
       return;
     }
 
-    const initPayment = async () => {
-      try {
-        const { data } = await orderService.createPaymentIntent(cartItems);
-        if (data?.success) {
-          setClientSecret(data.clientSecret);
-        } else {
-          setFetchError("Could not initialize payment.");
-        }
-      } catch (err) {
-        setFetchError("Server error. Please try again.");
-        console.error(err);
-      }
-    };
-    initPayment();
+    orderService
+      .createPaymentIntent(cartItems)
+      .then(({ data }) => {
+        if (data?.success) setClientSecret(data.clientSecret);
+        else setFetchError("Could not initialise payment. Please try again.");
+      })
+      .catch(() => setFetchError("Server error. Please try again."));
   }, []);
 
   return (
-    <Layout title="Payment — EShop">
+    <Layout title="Payment — EliteMart">
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="flex items-center gap-3 mb-8">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: "2rem",
+          }}
+        >
           <button
             onClick={() => navigate("/checkout")}
-            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:shadow"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 13,
+              color: "var(--ink-soft)",
+              background: "#fff",
+              border: "1px solid var(--stone)",
+              borderRadius: 8,
+              padding: "6px 12px",
+              cursor: "pointer",
+            }}
           >
-            <HiArrowLeft className="text-base" />
-            Back to Checkout
+            <HiArrowLeft /> Back to Checkout
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">Payment</h1>
-        </div>
-
-        <div className="flex items-center gap-2 mb-8 text-sm">
-          <span className="flex items-center gap-1 text-gray-400">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
-              ✓
-            </span>
-            Cart
-          </span>
-          <span className="flex-1 h-px bg-gray-200" />
-          <span className="flex items-center gap-1 text-gray-400">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
-              ✓
-            </span>
-            Checkout
-          </span>
-          <span className="flex-1 h-px bg-gray-200" />
-          <span className="flex items-center gap-1 text-primary font-semibold">
-            <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
-              3
-            </span>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.5rem",
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "-.02em",
+            }}
+          >
             Payment
-          </span>
-          <span className="flex-1 h-px bg-gray-200" />
-          <span className="flex items-center gap-1 text-gray-400">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
-              4
-            </span>
-            Done
-          </span>
+          </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Order Details
-            </h2>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "2rem",
+          }}
+        >
+          <Step n={1} label="Cart" done />
+          <Divider />
+          <Step n={2} label="Checkout" done />
+          <Divider />
+          <Step n={3} label="Payment" active />
+          <Divider />
+          <Step n={4} label="Done" />
+        </div>
 
-            <div className="flex flex-col gap-2">
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}
+        >
+          {/* Order details */}
+          <div className="panel">
+            <p className="section-header">Order Details</p>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                marginBottom: 14,
+              }}
+            >
               {cartItems.map((item) => (
                 <div
                   key={item._id}
-                  className="flex justify-between text-sm text-gray-600"
+                  style={{ display: "flex", alignItems: "center", gap: 10 }}
                 >
-                  <span className="truncate max-w-[180px]">
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      background: "var(--cream)",
+                      borderRadius: 7,
+                      overflow: "hidden",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <img
+                      src={productService.getPhotoUrl(item._id)}
+                      alt={item.name}
+                      loading="lazy"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        padding: 3,
+                      }}
+                    />
+                  </div>
+                  <span
+                    style={{
+                      flex: 1,
+                      fontSize: 13,
+                      color: "var(--ink-mid)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {item.name} × {item.quantity || 1}
                   </span>
-                  <span className="font-medium">{formatPrice(item.price)}</span>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {formatPrice(item.price * (item.quantity || 1))}
+                  </span>
                 </div>
               ))}
             </div>
-
-            <div className="border-t border-gray-100 pt-3 flex justify-between">
-              <span className="font-semibold text-gray-800">Total</span>
-              <span className="font-bold text-primary text-lg">
+            <div className="divider" />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 14,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--ink-mid)",
+                }}
+              >
+                Total
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1.15rem",
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                }}
+              >
                 {formatPrice(cartTotal)}
               </span>
             </div>
-
-            <div className="border-t border-gray-100 pt-3">
-              <p className="text-xs text-gray-500 font-medium mb-1">
-                Delivering to:
+            <div
+              style={{
+                background: "var(--cream)",
+                borderRadius: 10,
+                padding: "10px 12px",
+              }}
+            >
+              <p className="label-xs" style={{ marginBottom: 4 }}>
+                Delivering to
               </p>
-              <p className="text-sm text-gray-700">{deliveryAddress}</p>
+              <p style={{ fontSize: 13, color: "var(--ink-mid)" }}>
+                {deliveryAddress}
+              </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-5">
-              Card Details
-            </h2>
+          {/* Card details */}
+          <div className="panel">
+            <p className="section-header">Card Details</p>
 
             {fetchError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
+              <div
+                style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  fontSize: 12,
+                  color: "var(--danger)",
+                  marginBottom: 16,
+                }}
+              >
                 {fetchError}
-              </p>
+              </div>
             )}
 
             {!clientSecret && !fetchError && (
-              <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  padding: "3rem 0",
+                }}
+              >
+                <div className="spinner" />
               </div>
             )}
 

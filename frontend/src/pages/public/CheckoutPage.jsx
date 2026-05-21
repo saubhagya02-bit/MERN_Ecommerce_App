@@ -6,170 +6,335 @@ import { selectCartItems, selectCartTotal } from "../../store/slices/cartSlice";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { formatPrice } from "../../utils/formatters";
 import productService from "../../api/productService";
-import { HiArrowLeft } from "react-icons/hi";
+import { HiArrowLeft, HiLockClosed } from "react-icons/hi";
+
+const Step = ({ n, label, active, done }) => (
+  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <span
+      style={{
+        width: 26,
+        height: 26,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 11,
+        fontWeight: 700,
+        background: done
+          ? "var(--success)"
+          : active
+            ? "var(--accent)"
+            : "var(--stone)",
+        color: done || active ? "#fff" : "var(--ink-soft)",
+      }}
+    >
+      {done ? "✓" : n}
+    </span>
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: active ? 600 : 400,
+        color: active
+          ? "var(--accent)"
+          : done
+            ? "var(--ink-mid)"
+            : "var(--ink-faint)",
+      }}
+    >
+      {label}
+    </span>
+  </span>
+);
+
+const Divider = () => (
+  <span
+    style={{ flex: 1, height: 1, background: "var(--stone)", margin: "0 4px" }}
+  />
+);
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const cartItems = useSelector(selectCartItems);
   const cartTotal = useSelector(selectCartTotal);
   const user = useSelector(selectCurrentUser);
-
   const [address, setAddress] = useState(user?.address || "");
 
   const handleProceed = () => {
     if (!address.trim()) {
-      alert("Please enter a delivery address.");
+      setAddressError("Please enter a delivery address.");
       return;
     }
     navigate("/payment", { state: { address } });
   };
 
-  if (cartItems.length === 0) {
+  const [addressError, setAddressError] = useState("");
+
+  if (cartItems.length === 0)
     return (
-      <Layout title="Checkout">
-        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-          <p className="text-gray-500 text-lg">Your cart is empty.</p>
+      <Layout title="Checkout — EliteMart">
+        <div
+          style={{
+            minHeight: "60vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 16,
+          }}
+        >
+          <p style={{ color: "var(--ink-soft)" }}>Your cart is empty.</p>
           <button onClick={() => navigate("/")} className="btn-primary">
             Continue Shopping
           </button>
         </div>
       </Layout>
     );
-  }
 
   return (
-    <Layout title="Checkout — EShop">
+    <Layout title="Checkout — EliteMart">
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="flex items-center gap-3 mb-8">
+        {/* Back + title */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: "2rem",
+          }}
+        >
           <button
             onClick={() => navigate("/cart")}
-            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition-colors bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:shadow"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 13,
+              color: "var(--ink-soft)",
+              background: "#fff",
+              border: "1px solid var(--stone)",
+              borderRadius: 8,
+              padding: "6px 12px",
+              cursor: "pointer",
+            }}
           >
-            <HiArrowLeft className="text-base" />
-            Back to Cart
+            <HiArrowLeft /> Back to Cart
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">Checkout</h1>
-        </div>
-
-        <div className="flex items-center gap-2 mb-8 text-sm">
-          <span className="flex items-center gap-1 text-gray-400">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
-              ✓
-            </span>
-            Cart
-          </span>
-          <span className="flex-1 h-px bg-gray-200" />
-          <span className="flex items-center gap-1 text-primary font-semibold">
-            <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
-              2
-            </span>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.5rem",
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "-.02em",
+            }}
+          >
             Checkout
-          </span>
-          <span className="flex-1 h-px bg-gray-200" />
-          <span className="flex items-center gap-1 text-gray-400">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
-              3
-            </span>
-            Payment
-          </span>
-          <span className="flex-1 h-px bg-gray-200" />
-          <span className="flex items-center gap-1 text-gray-400">
-            <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold">
-              4
-            </span>
-            Done
-          </span>
+          </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+        {/* Steps */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "2rem",
+          }}
+        >
+          <Step n={1} label="Cart" done />
+          <Divider />
+          <Step n={2} label="Checkout" active />
+          <Divider />
+          <Step n={3} label="Payment" />
+          <Divider />
+          <Step n={4} label="Done" />
+        </div>
+
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}
+        >
+          {/* Order summary */}
+          <div className="panel">
+            <p className="section-header">
               Order Summary ({cartItems.length} item
               {cartItems.length !== 1 ? "s" : ""})
-            </h2>
-
-            <div className="flex flex-col gap-4 mb-6">
+            </p>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+                marginBottom: 16,
+              }}
+            >
               {cartItems.map((item) => (
-                <div key={item._id} className="flex items-center gap-4">
-                  <img
-                    src={productService.getPhotoUrl(item._id)}
-                    alt={item.name}
-                    className="w-14 h-14 object-contain rounded-lg bg-gray-50 border border-gray-100"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800 truncate">
+                <div
+                  key={item._id}
+                  style={{ display: "flex", alignItems: "center", gap: 12 }}
+                >
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      background: "var(--cream)",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <img
+                      src={productService.getPhotoUrl(item._id)}
+                      alt={item.name}
+                      loading="lazy"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        padding: 4,
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "var(--ink)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {item.name}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                       Qty: {item.quantity || 1}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-800">
-                    {formatPrice(item.price)}
+                  <p
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {formatPrice(item.price * (item.quantity || 1))}
                   </p>
                 </div>
               ))}
             </div>
-
-            <div className="border-t border-gray-100 pt-4 flex justify-between items-center">
-              <span className="text-gray-600 font-medium">Total</span>
-              <span className="text-xl font-bold text-primary">
+            <div className="divider" />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--ink-mid)",
+                }}
+              >
+                Total
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1.2rem",
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                }}
+              >
                 {formatPrice(cartTotal)}
               </span>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Delivery Address
-            </h2>
+          {/* Delivery */}
+          <div
+            className="panel"
+            style={{ display: "flex", flexDirection: "column", gap: 16 }}
+          >
+            <p className="section-header">Delivery Details</p>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
+              <label className="form-label">Full Name</label>
               <input
                 type="text"
                 value={user?.name || ""}
                 readOnly
-                className="input-field bg-gray-50 cursor-not-allowed"
+                className="input-field"
+                style={{
+                  background: "var(--cream)",
+                  cursor: "not-allowed",
+                  color: "var(--ink-soft)",
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
-              </label>
+              <label className="form-label">Phone</label>
               <input
                 type="text"
                 value={user?.phone || ""}
                 readOnly
-                className="input-field bg-gray-50 cursor-not-allowed"
+                className="input-field"
+                style={{
+                  background: "var(--cream)",
+                  cursor: "not-allowed",
+                  color: "var(--ink-soft)",
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Delivery Address <span className="text-red-500">*</span>
+              <label className="form-label">
+                Delivery Address{" "}
+                <span style={{ color: "var(--danger)" }}>*</span>
               </label>
               <textarea
                 rows={3}
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setAddressError("");
+                }}
                 placeholder="Enter your full delivery address"
-                className="input-field resize-none"
+                className="input-field"
+                style={{ resize: "none" }}
               />
+              {addressError && (
+                <p
+                  style={{ fontSize: 12, color: "var(--danger)", marginTop: 4 }}
+                >
+                  {addressError}
+                </p>
+              )}
             </div>
 
             <button
               onClick={handleProceed}
-              className="btn-primary py-3 text-base mt-2"
+              className="btn-primary"
+              style={{ padding: "12px 0", fontSize: 14, marginTop: 4 }}
             >
               Proceed to Payment
             </button>
 
-            <p className="text-xs text-gray-400 text-center">
-              🔒 Your information is secure and encrypted
+            <p
+              style={{
+                fontSize: 11,
+                color: "var(--ink-faint)",
+                textAlign: "center",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+              }}
+            >
+              <HiLockClosed /> Your information is secure and encrypted
             </p>
           </div>
         </div>

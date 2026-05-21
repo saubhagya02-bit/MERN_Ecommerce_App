@@ -10,7 +10,6 @@ const Profile = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const [loading, setLoading] = useState(false);
-
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -32,7 +31,7 @@ const Profile = () => {
   }, [user]);
 
   const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,7 +43,7 @@ const Profile = () => {
       } else {
         dispatch(updateUser(data.updatedUser));
         toast.success("Profile updated!");
-        setForm((prev) => ({ ...prev, password: "" }));
+        setForm((p) => ({ ...p, password: "" }));
       }
     } catch {
       toast.error("Something went wrong");
@@ -54,64 +53,86 @@ const Profile = () => {
   };
 
   const fields = [
-    { name: "name", label: "Full Name", type: "text", placeholder: "John Doe" },
+    {
+      name: "name",
+      label: "Full Name",
+      type: "text",
+      placeholder: "Jane Smith",
+    },
     {
       name: "email",
-      label: "Email",
+      label: "Email address",
       type: "email",
-      placeholder: "john@example.com",
+      placeholder: "",
+      readOnly: true,
     },
     {
       name: "password",
-      label: "New Password (optional)",
+      label: "New password (leave blank)",
       type: "password",
-      placeholder: "Leave blank to keep current",
+      placeholder: "••••••••",
       required: false,
     },
     {
       name: "phone",
-      label: "Phone",
+      label: "Phone number",
       type: "text",
-      placeholder: "+1 234 567 890",
+      placeholder: "+1 234 567 8900",
     },
     {
       name: "address",
-      label: "Address",
+      label: "Delivery address",
       type: "text",
-      placeholder: "123 Main St",
+      placeholder: "123 Main Street",
     },
   ];
 
   return (
-    <Layout title="My Profile">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <Layout title="My Profile — EliteMart">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-1">
             <UserMenu />
           </div>
           <div className="md:col-span-3">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">
+            <div className="panel">
+              <p className="page-title" style={{ fontSize: "1.35rem" }}>
                 Edit Profile
-              </h2>
+              </p>
               <form
                 onSubmit={handleSubmit}
-                className="flex flex-col gap-4 max-w-md"
+                className="flex flex-col gap-4"
+                style={{ maxWidth: 440 }}
               >
                 {fields.map(
-                  ({ name, label, type, placeholder, required = true }) => (
+                  ({
+                    name,
+                    label,
+                    type,
+                    placeholder,
+                    readOnly,
+                    required = true,
+                  }) => (
                     <div key={name}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {label}
-                      </label>
+                      <label className="form-label">{label}</label>
                       <input
                         type={type}
                         name={name}
                         value={form[name]}
                         onChange={handleChange}
                         placeholder={placeholder}
-                        className="input-field"
+                        readOnly={readOnly}
                         required={required}
+                        className="input-field"
+                        style={
+                          readOnly
+                            ? {
+                                background: "var(--cream)",
+                                cursor: "not-allowed",
+                                color: "var(--ink-soft)",
+                              }
+                            : {}
+                        }
                       />
                     </div>
                   ),
@@ -119,9 +140,9 @@ const Profile = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary py-3 mt-2"
+                  className="btn-primary py-3 mt-1"
                 >
-                  {loading ? "Saving..." : "Save Changes"}
+                  {loading ? "Saving…" : "Save Changes"}
                 </button>
               </form>
             </div>

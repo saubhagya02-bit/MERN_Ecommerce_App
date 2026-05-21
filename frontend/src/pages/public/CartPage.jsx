@@ -6,6 +6,7 @@ import {
   selectCartItems,
   selectCartTotal,
   removeFromCart,
+  updateQuantity,
 } from "../../store/slices/cartSlice";
 import { selectCurrentUser, selectToken } from "../../store/slices/authSlice";
 import { formatPrice, truncate } from "../../utils/formatters";
@@ -19,85 +20,202 @@ const CartPage = () => {
   const token = useSelector(selectToken);
 
   return (
-    <Layout title="Your Cart">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">
-            {token ? `Hello, ${user?.name} 👋` : "Your Cart"}
+    <Layout title="Your Cart — EliteMart">
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* Page header */}
+        <div className="mb-8">
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.75rem",
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "-.02em",
+            }}
+          >
+            {token ? `${user?.name}'s Cart` : "Your Cart"}
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="mt-1 text-sm" style={{ color: "var(--ink-soft)" }}>
             {items.length > 0
-              ? `${items.length} item${items.length > 1 ? "s" : ""} in your cart`
+              ? `${items.length} item${items.length !== 1 ? "s" : ""}`
               : "Your cart is empty"}
           </p>
         </div>
 
         {items.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="text-center py-20">
             <p className="text-5xl mb-4">🛒</p>
-            <p className="text-gray-500 mb-4">Nothing here yet!</p>
+            <p className="mb-5 text-sm" style={{ color: "var(--ink-soft)" }}>
+              Nothing here yet!
+            </p>
             <button onClick={() => navigate("/")} className="btn-primary">
               Continue Shopping
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 flex flex-col gap-4">
+            {/* Cart items */}
+            <div className="md:col-span-2 flex flex-col gap-3">
               {items.map((item) => (
                 <div
                   key={item._id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4"
+                  className="panel flex gap-4 items-start"
+                  style={{ padding: "1rem" }}
                 >
-                  <img
-                    src={productService.getPhotoUrl(item._id)}
-                    alt={item.name}
-                    className="w-24 h-24 object-contain rounded-lg bg-gray-50"
-                  />
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-semibold text-gray-800">
-                        {item.name}
-                      </h4>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {truncate(item.description, 60)}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="font-bold text-primary">
-                        {formatPrice(item.price)}
+                  <div
+                    style={{
+                      width: 80,
+                      height: 80,
+                      flexShrink: 0,
+                      background: "var(--cream)",
+                      borderRadius: 10,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <img
+                      src={productService.getPhotoUrl(item._id)}
+                      alt={item.name}
+                      loading="lazy"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        padding: 6,
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex-1 flex flex-col gap-1 min-w-0">
+                    <p
+                      className="text-sm font-semibold truncate"
+                      style={{ color: "var(--ink)" }}
+                    >
+                      {item.name}
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                      {truncate(item.description, 55)}
+                    </p>
+
+                    {/* Qty controls */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        onClick={() =>
+                          dispatch(
+                            updateQuantity({ productId: item._id, delta: -1 }),
+                          )
+                        }
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: 6,
+                          border: "1px solid var(--stone)",
+                          background: "var(--cream)",
+                          fontWeight: 600,
+                          fontSize: 14,
+                          cursor: "pointer",
+                          color: "var(--ink-mid)",
+                        }}
+                      >
+                        −
+                      </button>
+                      <span
+                        className="text-sm font-medium"
+                        style={{
+                          minWidth: 20,
+                          textAlign: "center",
+                          color: "var(--ink)",
+                        }}
+                      >
+                        {item.quantity || 1}
                       </span>
                       <button
-                        onClick={() => dispatch(removeFromCart(item._id))}
-                        className="btn-danger text-xs px-3 py-1"
+                        onClick={() =>
+                          dispatch(
+                            updateQuantity({ productId: item._id, delta: 1 }),
+                          )
+                        }
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: 6,
+                          border: "1px solid var(--stone)",
+                          background: "var(--cream)",
+                          fontWeight: 600,
+                          fontSize: 14,
+                          cursor: "pointer",
+                          color: "var(--ink-mid)",
+                        }}
                       >
-                        Remove
+                        +
                       </button>
                     </div>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <p
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: "0.95rem",
+                        fontWeight: 600,
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {formatPrice(item.price * (item.quantity || 1))}
+                    </p>
+                    <button
+                      onClick={() => dispatch(removeFromCart(item._id))}
+                      className="btn-danger"
+                      style={{ fontSize: 11, padding: "4px 10px" }}
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
+            {/* Order summary */}
             <div className="md:col-span-1">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-20">
-                <h2 className="text-lg font-bold text-gray-800 mb-4">
+              <div
+                className="panel"
+                style={{ position: "sticky", top: "5rem" }}
+              >
+                <p className="section-header" style={{ marginBottom: "1rem" }}>
                   Order Summary
-                </h2>
+                </p>
 
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>Subtotal ({items.length} items)</span>
+                <div
+                  className="flex justify-between text-sm mb-2"
+                  style={{ color: "var(--ink-mid)" }}
+                >
+                  <span>Subtotal</span>
                   <span>{formatPrice(total)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600 mb-4">
+                <div
+                  className="flex justify-between text-sm mb-4"
+                  style={{ color: "var(--ink-mid)" }}
+                >
                   <span>Shipping</span>
-                  <span className="text-green-600 font-medium">Free</span>
+                  <span style={{ color: "var(--success)", fontWeight: 500 }}>
+                    Free
+                  </span>
                 </div>
 
-                <hr className="mb-4" />
+                <div className="divider" />
 
-                <div className="flex justify-between font-bold text-gray-800 text-base mb-6">
+                <div
+                  className="flex justify-between font-semibold mb-5"
+                  style={{ color: "var(--ink)" }}
+                >
                   <span>Total</span>
-                  <span className="text-primary">{formatPrice(total)}</span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      color: "var(--accent)",
+                    }}
+                  >
+                    {formatPrice(total)}
+                  </span>
                 </div>
 
                 {!token && (
@@ -111,38 +229,69 @@ const CartPage = () => {
 
                 {token && !user?.address && (
                   <div className="flex flex-col gap-3">
-                    <p className="text-sm text-yellow-600 bg-yellow-50 border border-yellow-100 rounded-lg px-3 py-2">
-                      ⚠️ Please add a delivery address before checkout.
-                    </p>
+                    <div
+                      style={{
+                        background: "#FFFBEB",
+                        border: "1px solid #FEF3C7",
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                        fontSize: 12,
+                        color: "#92400E",
+                      }}
+                    >
+                      ⚠️ Add a delivery address to your profile before checking
+                      out.
+                    </div>
                     <button
                       onClick={() => navigate("/dashboard/user/profile")}
                       className="btn-outline w-full py-3"
                     >
-                      Add Delivery Address
+                      Add Address
                     </button>
                   </div>
                 )}
 
                 {token && user?.address && (
                   <div className="flex flex-col gap-3">
-                    <div className="bg-gray-50 rounded-xl p-3 text-sm">
-                      <p className="font-medium text-gray-700 mb-1">
-                        Deliver to:
+                    <div
+                      style={{
+                        background: "var(--cream)",
+                        border: "1px solid var(--stone)",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                      }}
+                    >
+                      <p
+                        className="text-xs font-semibold mb-1"
+                        style={{ color: "var(--ink-soft)" }}
+                      >
+                        Delivering to
                       </p>
-                      <p className="text-gray-600">{user.address}</p>
+                      <p
+                        className="text-sm"
+                        style={{ color: "var(--ink-mid)" }}
+                      >
+                        {user.address}
+                      </p>
                       <button
                         onClick={() => navigate("/dashboard/user/profile")}
-                        className="text-primary text-xs mt-1 hover:underline"
+                        className="text-xs mt-1 hover:underline"
+                        style={{
+                          color: "var(--accent)",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
                       >
                         Change address
                       </button>
                     </div>
-
                     <button
                       onClick={() => navigate("/checkout")}
-                      className="btn-primary w-full py-3 text-base"
+                      className="btn-primary w-full py-3"
                     >
-                      Proceed to Checkout 
+                      Proceed to Checkout
                     </button>
                   </div>
                 )}

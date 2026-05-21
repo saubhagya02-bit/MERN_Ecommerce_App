@@ -52,77 +52,51 @@ export const createPaymentIntentController = async (req, res) => {
   }
 };
 
-// ─── Create Order After Payment ────────────────────────────────
 export const createOrderController = async (req, res) => {
   try {
     const { cartItems, deliveryAddress, paymentIntentId } = req.body;
 
-    if (!cartItems || cartItems.length === 0) {
-      return res.status(400).send({ success: false, message: "Cart is empty" });
-    }
-    if (!deliveryAddress) {
-      return res
-        .status(400)
-        .send({ success: false, message: "Delivery address is required" });
-    }
-    if (!paymentIntentId) {
-      return res
-        .status(400)
-        .send({ success: false, message: "Payment intent ID is required" });
-    }
-
-    const stripe = getStripe();
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-    if (paymentIntent.status !== "succeeded") {
-      return res.status(400).send({
-        success: false,
-        message: "Payment not confirmed. Please try again.",
-      });
-    }
-
-    const productIds = cartItems.map((item) => item._id);
-    const products = await productModel.find({ _id: { $in: productIds } });
-
-    const orderProducts = products.map((product) => ({
-      product: product._id,
-      name: product.name,
-      price: product.price,
-      quantity:
-        cartItems.find((i) => i._id === product._id.toString())?.quantity || 1,
+    const products = cartItems.map((item) => ({
+      product: item._id || item.product,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity || 1,
     }));
 
-    const totalAmount = orderProducts.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+    const totalAmount = products.reduce(
+      (sum, p) => sum + p.price * p.quantity,
       0,
     );
 
     const order = await new orderModel({
-      products: orderProducts,
+      products,
       buyer: req.user._id,
       deliveryAddress,
+      stripePaymentIntentId: paymentIntentId,
       totalAmount,
       paymentStatus: "paid",
-      stripePaymentIntentId: paymentIntentId,
       orderStatus: "processing",
     }).save();
 
-    res.status(201).send({
-      success: true,
-      message: "Order placed successfully",
-      order,
-    });
+    //Decrement stock for each purchased product
+    await Promise.all(
+      products.map(({ product: pid, quantity }) =>
+        productModel.findByIdAndUpdate(
+          pid,
+          { $inc: { quantity: -quantity } },
+          { new: true },
+        ),
+      ),
+    );
+
+    res.status(201).json({ success: true, order });
   } catch (error) {
-    console.error("Create Order Error:", error);
-    res.status(500).send({
-      success: false,
-      message: "Failed to create order",
-      error: error.message,
-    });
+    console.error(error);
+    res.status(500).json({ success: false, message: "Order creation failed" });
   }
 };
 
-// ─── Get Orders for Logged-in User ────────────────────────────
+// Get Orders for Logged-in User
 export const getUserOrdersController = async (req, res) => {
   try {
     const orders = await orderModel
@@ -144,7 +118,7 @@ export const getUserOrdersController = async (req, res) => {
   }
 };
 
-// ─── Get All Orders (Admin) ────────────────────────────────────
+// Get All Orders (Admin)
 export const getAllOrdersController = async (req, res) => {
   try {
     const orders = await orderModel

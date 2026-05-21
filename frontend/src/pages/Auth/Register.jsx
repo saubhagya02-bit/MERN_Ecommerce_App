@@ -4,133 +4,135 @@ import toast from "react-hot-toast";
 import Layout from "../../components/Layout/Layout";
 import authService from "../../api/authService";
 
-const initialForm = {
-  name: "",
-  email: "",
-  password: "",
-  phone: "",
-  address: "",
-  answer: "",
-};
+const fields = [
+  { name: "name", label: "Full Name", type: "text", placeholder: "Jane Smith" },
+  {
+    name: "email",
+    label: "Email address",
+    type: "email",
+    placeholder: "jane@example.com",
+  },
+  {
+    name: "password",
+    label: "Password",
+    type: "password",
+    placeholder: "Minimum 8 characters",
+    minLength: 8,
+  },
+  {
+    name: "phone",
+    label: "Phone number",
+    type: "text",
+    placeholder: "+1 234 567 8900",
+  },
+  {
+    name: "address",
+    label: "Delivery address",
+    type: "text",
+    placeholder: "123 Main Street",
+  },
+  {
+    name: "answer",
+    label: "Security answer",
+    type: "text",
+    placeholder: "Your memorable answer",
+  },
+];
 
 const Register = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    address: "",
+    answer: "",
+  });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const { data } = await authService.register(form);
-
       if (data?.success) {
-        toast.success("Account created successfully!");
+        toast.success(data.message || "Account created!");
         navigate("/login");
       } else {
         toast.error(data?.message || "Registration failed");
       }
-    } catch (err) {
-      toast.error("Something went wrong. Please try again.");
+    } catch {
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const fields = [
-    {
-      name: "name",
-      label: "Full Name",
-      type: "text",
-      placeholder: "Your Name",
-    },
-    {
-      name: "email",
-      label: "Email Address",
-      type: "email",
-      placeholder: "example@gmail.com",
-    },
-    {
-      name: "password",
-      label: "Password",
-      type: "password",
-      placeholder: "Min 6 characters",
-    },
-    {
-      name: "phone",
-      label: "Phone Number",
-      type: "text",
-      placeholder: "+94 77 123 4567",
-    },
-    {
-      name: "address",
-      label: "Address",
-      type: "text",
-      placeholder: "No. 123, Colombo",
-    },
-    {
-      name: "answer",
-      label: "Security Answer",
-      type: "text",
-      placeholder: "Your nickname",
-    },
-  ];
-
   return (
-    <Layout title="Register — EliteMart">
-      <div className="min-h-[85vh] flex items-center justify-center px-4 py-10 bg-gray-50">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 w-full max-w-lg">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
-            <p className="text-sm text-gray-500 mt-2">
-              Join EliteMart and start shopping smarter
+    <Layout title="Create Account — EliteMart">
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+        <div style={{ width: "100%", maxWidth: 440 }}>
+          <div className="text-center mb-8">
+            <p
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "2rem",
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Create account
+            </p>
+            <p className="mt-1 text-sm" style={{ color: "var(--ink-soft)" }}>
+              Join EliteMart today
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {fields.map(({ name, label, type, placeholder }) => (
-              <div key={name}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {label}
-                </label>
-                <input
-                  type={type}
-                  name={name}
-                  value={form[name]}
-                  onChange={handleChange}
-                  placeholder={placeholder}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200
-                             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                             outline-none transition"
-                  required
-                />
-              </div>
-            ))}
+          <div className="panel">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {fields.map(({ name, label, type, placeholder, minLength }) => (
+                <div key={name}>
+                  <label className="form-label">{label}</label>
+                  <input
+                    type={type}
+                    name={name}
+                    value={form[name]}
+                    onChange={handleChange}
+                    placeholder={placeholder}
+                    className="input-field"
+                    required
+                    minLength={minLength}
+                  />
+                </div>
+              ))}
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary w-full py-3 mt-1"
+              >
+                {loading ? "Creating account…" : "Create Account"}
+              </button>
+            </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium
-                         hover:bg-blue-700 transition disabled:opacity-60"
+            <p
+              className="text-center text-sm mt-5"
+              style={{ color: "var(--ink-soft)" }}
             >
-              {loading ? "Creating Account..." : "Create Account"}
-            </button>
-          </form>
-
-          {/* Login Link */}
-          <p className="text-sm text-center text-gray-500 mt-5">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="text-blue-600 font-medium hover:underline"
-            >
-              Login here
-            </Link>
-          </p>
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-semibold hover:underline"
+                style={{ color: "var(--accent)" }}
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

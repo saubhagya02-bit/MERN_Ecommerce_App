@@ -5,11 +5,11 @@ import Footer from "./Footer";
 const Layout = ({
   children,
   title = "EliteMart",
-  description = "MERN Stack Ecommerce",
-  keywords = "MERN, React, MongoDB",
+  description = "Shop fashion, electronics and lifestyle products at EliteMart.",
+  keywords = "ecommerce, fashion, electronics, lifestyle",
   author = "EliteMart",
 }) => (
-  <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+  <>
     <Helmet>
       <meta charSet="utf-8" />
       <meta name="description" content={description} />
@@ -18,12 +18,33 @@ const Layout = ({
       <title>{title}</title>
     </Helmet>
 
-    <Header />
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        background: "var(--cream)",
 
-    <main className="flex-1 pt-16">{children}</main>
+        overflowX: "hidden",
+      }}
+    >
+      <Header />
 
-    <Footer />
-  </div>
+      <main
+        style={{
+          flex: 1,
+          paddingTop: "var(--header-h, 4rem)",
+
+          minWidth: 0,
+          width: "100%",
+        }}
+      >
+        {children}
+      </main>
+
+      <Footer />
+    </div>
+  </>
 );
 
 export default Layout;

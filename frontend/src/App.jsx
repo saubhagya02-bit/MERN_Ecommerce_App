@@ -16,7 +16,7 @@ import Contact from "./pages/public/Contact";
 import Policy from "./pages/public/Policy";
 import PageNotFound from "./pages/public/PageNotFound";
 
-// Auth pages 
+// Auth pages
 import Register from "./pages/Auth/Register";
 import Login from "./pages/Auth/Login";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
@@ -41,11 +41,42 @@ import AdminRoute from "./components/Routes/AdminRoute";
 
 const App = () => (
   <>
-    <Toaster position="top-right" />
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        style: {
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: "0.875rem",
+          background: "#fff",
+          color: "#1C1917",
+          border: "1px solid #E8E2D9",
+          borderRadius: "10px",
+          boxShadow: "0 4px 12px rgba(28,25,23,.10)",
+          padding: "12px 16px",
+        },
+        success: {
+          iconTheme: { primary: "#15803D", secondary: "#fff" },
+          style: {
+            border: "1px solid #DCFCE7",
+            background: "#F0FDF4",
+            color: "#15803D",
+          },
+        },
+        error: {
+          iconTheme: { primary: "#B91C1C", secondary: "#fff" },
+          style: {
+            border: "1px solid #FEE2E2",
+            background: "#FFF5F5",
+            color: "#B91C1C",
+          },
+        },
+      }}
+    />
     <Routes>
       {/* Public */}
       <Route path="/" element={<HomePage />} />
       <Route path="/product/:slug" element={<ProductDetails />} />
+      <Route path="/products" element={<Products />} />
       <Route path="/categories" element={<Categories />} />
       <Route path="/category/:slug" element={<CategoryProduct />} />
       <Route path="/search" element={<Search />} />
@@ -62,14 +93,14 @@ const App = () => (
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* User protected */}
+      {/* User — protected */}
       <Route path="/dashboard" element={<PrivateRoute />}>
         <Route path="user" element={<Dashboard />} />
         <Route path="user/profile" element={<Profile />} />
         <Route path="user/orders" element={<Orders />} />
       </Route>
 
-      {/* Admin protected */}
+      {/* Admin — protected */}
       <Route path="/dashboard" element={<AdminRoute />}>
         <Route path="admin" element={<AdminDashboard />} />
         <Route path="admin/orders" element={<AdminOrders />} />

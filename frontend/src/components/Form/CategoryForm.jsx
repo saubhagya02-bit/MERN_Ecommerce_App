@@ -9,7 +9,7 @@ const CategoryForm = ({
       type="text"
       value={value}
       onChange={(e) => setValue(e.target.value)}
-      placeholder="Enter category name"
+      placeholder="Category name"
       className="input-field"
       required
     />
