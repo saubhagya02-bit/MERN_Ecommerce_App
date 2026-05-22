@@ -193,27 +193,27 @@ export const updateProductController = async (req, res) => {
 // Get paginated product list
 export const productListController = async (req, res) => {
   try {
-    const perPage = 10;
-    const page = req.params.page || 1;
+    const perPage = Number(req.query.limit) || 8;
+    const page = Number(req.params.page) || 1;
 
     const products = await productModel
       .find({})
+      .select("-photo")
       .skip((page - 1) * perPage)
       .limit(perPage)
-      .select("-photo")
       .sort({ createdAt: -1 });
 
     res.status(200).send({
       success: true,
-      count: products.length,
       products,
     });
   } catch (error) {
-    console.log("Product List Error:", error);
-    res.status(500).send({
+    console.log(error);
+
+    res.status(400).send({
       success: false,
-      message: "Error fetching product list",
-      error: error.message,
+      message: "Error in product list",
+      error,
     });
   }
 };

@@ -57,7 +57,7 @@ const HomePage = () => {
   const fetchProducts = async (pageNum, append, knownTotal) => {
     setLoading(true);
     try {
-      const { data } = await productService.getList(pageNum);
+      const { data } = await productService.getList(pageNum, 8);
       const fresh = data?.products || [];
       setProducts((prev) => (append ? [...prev, ...fresh] : fresh));
       const loaded = append
@@ -197,8 +197,9 @@ const HomePage = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-            gap: 16,
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: "24px",
+            alignItems: "stretch",
           }}
         >
           {products.map((p) => (

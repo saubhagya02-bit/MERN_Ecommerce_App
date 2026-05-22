@@ -117,14 +117,14 @@ const Products = () => {
             </div>
             <div className="md:col-span-3">
               <p
-                 style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1.75rem",
-              fontWeight: 600,
-              color: "var(--ink)",
-              letterSpacing: "-.02em",
-            }}
-          >
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1.75rem",
+                  fontWeight: 600,
+                  color: "var(--ink)",
+                  letterSpacing: "-.02em",
+                }}
+              >
                 All Products ({adminProducts.length})
               </p>
 
@@ -215,8 +215,9 @@ const Products = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-            gap: 16,
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: "24px",
+            alignItems: "stretch",
           }}
         >
           {products.map((p) => (

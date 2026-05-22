@@ -3,7 +3,8 @@ import axiosInstance from "./axiosInstance";
 const productService = {
   getAll: () => axiosInstance.get("/product/get-product"),
   getOne: (slug) => axiosInstance.get(`/product/get-product/${slug}`),
-  getList: (page) => axiosInstance.get(`/product/product-list/${page}`),
+  getList: (page = 1, limit = 8) =>
+    axiosInstance.get(`/product/product-list/${page}`),
   getCount: () => axiosInstance.get("/product/product-count"),
   getPhotoUrl: (id) => `/api/v1/product/product-photo/${id}`,
   getByCategory: (slug) =>
