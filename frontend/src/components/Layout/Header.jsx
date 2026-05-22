@@ -68,20 +68,29 @@ const Header = () => {
       }}
     >
       <div className="max-w-7xl mx-auto px-5 flex items-center justify-between h-16">
-        {/* Brand */}
-        <NavLink to="/" className="flex items-center gap-2">
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1.25rem",
-              fontWeight: 700,
-              color: "var(--accent)",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            EliteMart
-          </span>
-        </NavLink>
+  {/* Brand */}
+  <NavLink to="/" className="flex items-center gap-2">
+    
+    {/* Logo */}
+    <img
+      src="/logo.png"
+      alt="EliteMart Logo"
+      className="w-10 h-10 object-contain"
+    />
+
+    {/* Brand Name */}
+    <span
+      style={{
+        fontFamily: "var(--font-display)",
+        fontSize: "1.25rem",
+        fontWeight: 700,
+        color: "var(--accent)",
+        letterSpacing: "-0.02em",
+      }}
+    >
+      EliteMart
+    </span>
+  </NavLink>
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-6">
