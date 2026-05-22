@@ -64,21 +64,20 @@ export const getProductController = async (req, res) => {
       .find({})
       .populate("category")
       .select("-photo")
-      .limit(12)
       .sort({ createdAt: -1 });
 
     res.status(200).send({
       success: true,
-      countTotal: products.length,
-      message: "All Products",
+      total: products.length,
       products,
     });
   } catch (error) {
     console.log(error);
+
     res.status(500).send({
       success: false,
-      message: "Error in getting products",
-      error: error.message,
+      message: "Error while getting all products",
+      error,
     });
   }
 };

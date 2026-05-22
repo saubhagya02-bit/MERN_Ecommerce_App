@@ -1,173 +1,190 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
-import AdminMenu from "../../components/Layout/AdminMenu";
-import CategoryForm from "../../components/Form/CategoryForm";
 import categoryService from "../../api/categoryService";
-import toast from "react-hot-toast";
-import { Modal } from "antd";
 
-const CreateCategory = () => {
+const ICONS = {
+  electronics: "💻",
+  tech: "💻",
+  computers: "🖥️",
+  fashion: "👗",
+  clothing: "👕",
+  clothes: "👔",
+  shoes: "👟",
+  footwear: "👞",
+  accessories: "⌚",
+  watches: "⌚",
+  jewellery: "💍",
+  jewelry: "💍",
+  beauty: "💄",
+  cosmetics: "💄",
+  skincare: "🧴",
+  sports: "⚽",
+  fitness: "🏋️",
+  home: "🏠",
+  furniture: "🛋️",
+  books: "📚",
+  toys: "🧸",
+  food: "🍎",
+  grocery: "🛒",
+};
+
+const getIcon = (name = "") => {
+  const key = name.toLowerCase();
+  for (const [k, v] of Object.entries(ICONS)) {
+    if (key.includes(k)) return v;
+  }
+  return "🛍️";
+};
+
+const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
-  const [name, setName] = useState("");
-  const [visible, setVisible] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [updatedName, setUpdatedName] = useState("");
-
-  const getAllCategory = async () => {
-    try {
-      const { data } = await categoryService.getAll();
-      if (data?.success) setCategories(data.category);
-    } catch {
-      toast.error("Failed to load categories");
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAllCategory();
+    categoryService
+      .getAll()
+      .then(({ data }) => {
+        if (data?.success) setCategories(data.category || []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    try {
-      const { data } = await categoryService.create(name);
-      if (data?.success) {
-        toast.success(`${name} created!`);
-        setName("");
-        getAllCategory();
-      } else {
-        toast.error(data.message);
-      }
-    } catch {
-      toast.error("Something went wrong");
-    }
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      const { data } = await categoryService.update(selected._id, updatedName);
-      if (data?.success) {
-        toast.success(`${updatedName} updated!`);
-        setVisible(false);
-        setSelected(null);
-        setUpdatedName("");
-        getAllCategory();
-      } else {
-        toast.error(data.message);
-      }
-    } catch {
-      toast.error("Something went wrong");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      const { data } = await categoryService.delete(id);
-      if (data?.success) {
-        toast.success("Category deleted!");
-        getAllCategory();
-      } else {
-        toast.error(data.message);
-      }
-    } catch {
-      toast.error("Something went wrong");
-    }
-  };
-
   return (
-    <Layout title="Manage Categories — Admin">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1">
-            <AdminMenu />
-          </div>
-          <div className="md:col-span-3">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-                Manage Categories
-              </h1>
-              <div className="max-w-md mb-8">
-                <CategoryForm
-                  handleSubmit={handleCreate}
-                  value={name}
-                  setValue={setName}
-                  submitLabel="Create Category"
-                />
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-700">
-                      <th className="text-left pb-3 font-semibold text-gray-500 dark:text-gray-400">
-                        #
-                      </th>
-                      <th className="text-left pb-3 font-semibold text-gray-500 dark:text-gray-400">
-                        Name
-                      </th>
-                      <th className="text-left pb-3 font-semibold text-gray-500 dark:text-gray-400">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((c, i) => (
-                      <tr
-                        key={c._id}
-                        className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                      >
-                        <td className="py-3 text-gray-400 dark:text-gray-500">
-                          {i + 1}
-                        </td>
-                        <td className="py-3 font-medium text-gray-800 dark:text-gray-200">
-                          {c.name}
-                        </td>
-                        <td className="py-3 flex gap-2">
-                          <button
-                            onClick={() => {
-                              setVisible(true);
-                              setSelected(c);
-                              setUpdatedName(c.name);
-                            }}
-                            className="btn-primary text-xs px-3 py-1"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(c._id)}
-                            className="btn-danger text-xs px-3 py-1"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {categories.length === 0 && (
-                  <p className="text-center text-gray-400 dark:text-gray-500 py-8">
-                    No categories yet.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+    <Layout title="All Categories — EliteMart">
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div style={{ marginBottom: "2rem" }}>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.75rem",
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "-.02em",
+            }}
+          >
+            All Categories
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
+            Browse products by category
+          </p>
         </div>
+
+        {/* Also show "All Products" card */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {/* All products card */}
+          <Link to="/products" style={{ textDecoration: "none" }}>
+            <div
+              className="card"
+              style={{
+                padding: "1.5rem 1rem",
+                textAlign: "center",
+                cursor: "pointer",
+                height: "100%",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.borderColor = "var(--accent)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = "var(--stone)")
+              }
+            >
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
+                🛒
+              </div>
+              <p style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>
+                All Products
+              </p>
+              <p
+                style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 3 }}
+              >
+                View everything
+              </p>
+            </div>
+          </Link>
+
+          {loading &&
+            [...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  height: 140,
+                  background: "var(--stone)",
+                  borderRadius: 16,
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              />
+            ))}
+
+          {/* Category cards */}
+          {!loading &&
+            categories.map((c) => (
+              <Link
+                key={c._id}
+                to={`/category/${c.slug}`}
+                style={{ textDecoration: "none" }}
+              >
+                <div
+                  className="card"
+                  style={{
+                    padding: "1.5rem 1rem",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    height: "100%",
+                    transition: "border-color .2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--accent)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--stone)")
+                  }
+                >
+                  <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
+                    {getIcon(c.name)}
+                  </div>
+                  <p
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 14,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    {c.name}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: "var(--ink-soft)",
+                      marginTop: 3,
+                      fontFamily: "var(--font-body)",
+                    }}
+                  >
+                    {c.slug}
+                  </p>
+                </div>
+              </Link>
+            ))}
+        </div>
+
+        {!loading && categories.length === 0 && (
+          <div style={{ textAlign: "center", padding: "5rem 0" }}>
+            <p style={{ fontSize: "3rem", marginBottom: "1rem" }}>📂</p>
+            <p style={{ color: "var(--ink-soft)", fontSize: 14 }}>
+              No categories yet.
+            </p>
+          </div>
+        )}
       </div>
-      <Modal
-        open={visible}
-        onCancel={() => setVisible(false)}
-        footer={null}
-        title="Edit Category"
-      >
-        <CategoryForm
-          handleSubmit={handleUpdate}
-          value={updatedName}
-          setValue={setUpdatedName}
-          submitLabel="Update Category"
-        />
-      </Modal>
     </Layout>
   );
 };
 
-export default CreateCategory;
+export default CategoriesPage;
