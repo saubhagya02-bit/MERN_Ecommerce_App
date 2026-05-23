@@ -2,6 +2,8 @@ import { Helmet } from "react-helmet-async";
 import Header from "./Header";
 import Footer from "./Footer";
 
+const TOP_BAR_H = "30px";
+
 const Layout = ({
   children,
   title = "EliteMart",
@@ -24,17 +26,18 @@ const Layout = ({
         flexDirection: "column",
         minHeight: "100vh",
         background: "var(--cream)",
-
         overflowX: "hidden",
       }}
     >
+      <div style={{ height: TOP_BAR_H }} />
+
       <Header />
 
       <main
         style={{
           flex: 1,
-          paddingTop: "var(--header-h, 4rem)",
-
+          paddingTop: 0,
+          marginTop: 0,
           minWidth: 0,
           width: "100%",
         }}
