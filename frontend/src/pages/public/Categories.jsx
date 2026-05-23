@@ -71,7 +71,6 @@ const CategoriesPage = () => {
           </p>
         </div>
 
-        {/* Also show "All Products" card */}
         <div
           style={{
             display: "grid",
