@@ -42,13 +42,11 @@ app.use((req, res) =>
 );
 app.use((err, req, res, next) => {
   console.error("Global Error:", err.message);
-  res
-    .status(500)
-    .json({
-      success: false,
-      message: "Internal server error",
-      error: err.message,
-    });
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+    error: err.message,
+  });
 });
 
 if (process.env.NODE_ENV !== "production") {
