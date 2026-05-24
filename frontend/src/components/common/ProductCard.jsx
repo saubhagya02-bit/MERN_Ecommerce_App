@@ -1,24 +1,42 @@
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { addToCart } from "../../store/slices/cartSlice";
-import {
-  selectCurrentUser,
-  selectIsAdmin,
-} from "../../store/slices/authSlice";
+import { selectIsAdmin } from "../../store/slices/authSlice";
 import productService from "../../api/productService";
 import { truncate, formatPrice } from "../../utils/formatters";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product: initialProduct }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const user = useSelector(selectCurrentUser);
   const isAdmin = useSelector(selectIsAdmin);
 
-  const handleAddToCart = () => {
-    dispatch(addToCart(product));
-    toast.success(`${product.name} added to cart`);
+  const [stock, setStock] = useState(initialProduct.quantity ?? 0);
+  const [adding, setAdding] = useState(false);
+
+  const outOfStock = stock <= 0;
+
+  const handleAddToCart = async () => {
+    if (outOfStock || adding) return;
+    setAdding(true);
+
+    // 1. Update UI immediately (optimistic)
+    setStock((s) => s - 1);
+    dispatch(addToCart(initialProduct));
+    toast.success(`${initialProduct.name} added to cart`);
+
+    // 2. Persist to backend
+    try {
+      await productService.adjustStock(initialProduct._id, -1);
+    } catch (err) {
+      // Rollback UI if backend fails
+      setStock((s) => s + 1);
+      dispatch({ type: "cart/removeFromCart", payload: initialProduct._id });
+      toast.error(err.message || "Could not add to cart — please try again");
+    } finally {
+      setAdding(false);
+    }
   };
 
   return (
@@ -36,7 +54,7 @@ const ProductCard = ({ product }) => {
         height: "100%",
       }}
     >
-      {/* Product Image */}
+      {/* Image */}
       <div
         style={{
           background: "var(--cream)",
@@ -47,10 +65,9 @@ const ProductCard = ({ product }) => {
         }}
       >
         <img
-          src={productService.getPhotoUrl(product._id)}
-          alt={product.name}
+          src={productService.getPhotoUrl(initialProduct._id)}
+          alt={initialProduct.name}
           loading="lazy"
-          className="product-image"
           style={{
             width: "100%",
             height: "100%",
@@ -59,6 +76,24 @@ const ProductCard = ({ product }) => {
             transition: "transform 0.4s ease",
           }}
         />
+        {outOfStock && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              background: "var(--danger)",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 700,
+              padding: "3px 8px",
+              borderRadius: 20,
+              letterSpacing: ".04em",
+            }}
+          >
+            OUT OF STOCK
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -71,7 +106,6 @@ const ProductCard = ({ product }) => {
           gap: "10px",
         }}
       >
-        {/* Product Name */}
         <h3
           style={{
             fontSize: "16px",
@@ -79,17 +113,15 @@ const ProductCard = ({ product }) => {
             color: "var(--ink)",
             lineHeight: "1.5",
             minHeight: "48px",
-
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
           }}
         >
-          {product.name}
+          {initialProduct.name}
         </h3>
 
-        {/* Description */}
         <p
           style={{
             fontSize: "14px",
@@ -97,23 +129,20 @@ const ProductCard = ({ product }) => {
             lineHeight: "1.6",
             flex: 1,
             minHeight: "65px",
-
             display: "-webkit-box",
             WebkitLineClamp: 3,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
           }}
         >
-          {truncate(product.description, 90)}
+          {truncate(initialProduct.description, 90)}
         </p>
 
-        {/* Price */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginTop: "4px",
           }}
         >
           <span
@@ -124,20 +153,24 @@ const ProductCard = ({ product }) => {
               color: "var(--accent)",
             }}
           >
-            {formatPrice(product.price)}
+            {formatPrice(initialProduct.price)}
+          </span>
+          {/* Live stock badge */}
+          <span
+            style={{
+              fontSize: 11,
+              color: outOfStock ? "var(--danger)" : "var(--success)",
+              fontWeight: 600,
+            }}
+          >
+            {outOfStock ? "Out of stock" : `${stock} left`}
           </span>
         </div>
 
         {/* Buttons */}
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            marginTop: "10px",
-          }}
-        >
+        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
           <button
-            onClick={() => navigate(`/product/${product.slug}`)}
+            onClick={() => navigate(`/product/${initialProduct.slug}`)}
             style={{
               flex: 1,
               padding: "10px 14px",
@@ -150,7 +183,6 @@ const ProductCard = ({ product }) => {
               cursor: "pointer",
               transition: "all 0.3s ease",
             }}
-            className="details-btn"
           >
             Details
           </button>
@@ -158,21 +190,22 @@ const ProductCard = ({ product }) => {
           {!isAdmin && (
             <button
               onClick={handleAddToCart}
+              disabled={outOfStock || adding}
               style={{
                 flex: 1,
                 padding: "10px 14px",
                 borderRadius: "12px",
                 border: "none",
-                background: "var(--accent)",
-                color: "#fff",
+                background: outOfStock ? "var(--stone)" : "var(--accent)",
+                color: outOfStock ? "var(--ink-soft)" : "#fff",
                 fontSize: "13px",
                 fontWeight: "600",
-                cursor: "pointer",
+                cursor: outOfStock ? "not-allowed" : "pointer",
                 transition: "all 0.3s ease",
+                opacity: adding ? 0.7 : 1,
               }}
-              className="cart-btn"
             >
-              Add Cart
+              {adding ? "Adding…" : outOfStock ? "Out of Stock" : "Add to Cart"}
             </button>
           )}
         </div>
