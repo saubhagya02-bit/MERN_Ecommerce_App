@@ -3,20 +3,38 @@ import { createSlice } from "@reduxjs/toolkit";
 const ADMIN_ROLE = 1;
 const getCartKey = (userId) => `cart_${userId}`;
 
+const getSavedUser = () => {
+  try {
+    const u = localStorage.getItem("authUser");
+    if (u) return JSON.parse(u);
+
+    const a = localStorage.getItem("auth");
+    if (a) return JSON.parse(a)?.user || null;
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 const loadCart = () => {
   try {
-    const auth = JSON.parse(localStorage.getItem("auth") || "null");
-    if (!auth?.user || auth.user.role === ADMIN_ROLE) return [];
-    return JSON.parse(localStorage.getItem(getCartKey(auth.user._id)) || "[]");
+    const user = getSavedUser();
+    if (!user || user.role === ADMIN_ROLE) return [];
+    return JSON.parse(localStorage.getItem(getCartKey(user._id)) || "[]");
   } catch {
     return [];
   }
 };
 
-const saveCart = (items, userId) =>
-  userId && localStorage.setItem(getCartKey(userId), JSON.stringify(items));
-const removeCart = (userId) =>
-  userId && localStorage.removeItem(getCartKey(userId));
+const saveCart = (items, userId) => {
+  if (!userId) return;
+  localStorage.setItem(getCartKey(userId), JSON.stringify(items));
+};
+
+const removeCart = (userId) => {
+  if (!userId) return;
+  localStorage.removeItem(getCartKey(userId));
+};
 
 const cartSlice = createSlice({
   name: "cart",
@@ -25,55 +43,36 @@ const cartSlice = createSlice({
     addToCart: (state, action) => {
       const payload = action.payload;
       const product = payload.product ?? payload;
-      const userId = payload.userId ?? null;
+      const user = getSavedUser();
 
-      const auth = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("auth") || "null");
-        } catch {
-          return null;
-        }
-      })();
-      if (auth?.user?.role === ADMIN_ROLE) return;
+      if (user?.role === ADMIN_ROLE) return;
+
       const existing = state.items.find((i) => i._id === product._id);
       if (existing) {
         existing.quantity = (existing.quantity || 1) + 1;
       } else {
         state.items.push({ ...product, quantity: 1 });
       }
-      saveCart(state.items, userId ?? auth?.user?._id);
+      saveCart(state.items, user?._id);
     },
 
     removeFromCart: (state, action) => {
       const payload = action.payload;
       const productId =
         typeof payload === "string" ? payload : payload.productId;
-      const userId = typeof payload === "string" ? null : payload.userId;
 
       const idx = state.items.findIndex((i) => i._id === productId);
       if (idx !== -1) {
         state.items.splice(idx, 1);
-        const auth = (() => {
-          try {
-            return JSON.parse(localStorage.getItem("auth") || "null");
-          } catch {
-            return null;
-          }
-        })();
-        saveCart(state.items, userId ?? auth?.user?._id);
+        const user = getSavedUser();
+        saveCart(state.items, user?._id);
       }
     },
 
-    clearCart: (state, action) => {
-      const auth = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("auth") || "null");
-        } catch {
-          return null;
-        }
-      })();
+    clearCart: (state) => {
+      const user = getSavedUser();
       state.items = [];
-      removeCart(action.payload ?? auth?.user?._id);
+      removeCart(user?._id);
     },
 
     loadUserCart: (state, action) => {
@@ -95,20 +94,13 @@ const cartSlice = createSlice({
       state.items = [];
     },
 
-    // Increment / decrement quantity in cart
     updateQuantity: (state, action) => {
       const { productId, delta } = action.payload;
       const item = state.items.find((i) => i._id === productId);
       if (!item) return;
       item.quantity = Math.max(1, (item.quantity || 1) + delta);
-      const auth = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("auth") || "null");
-        } catch {
-          return null;
-        }
-      })();
-      saveCart(state.items, auth?.user?._id);
+      const user = getSavedUser();
+      saveCart(state.items, user?._id);
     },
   },
 });
