@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import Layout from "../../components/Layout/Layout";
 import productService from "../../api/productService";
 import {
@@ -19,11 +20,37 @@ const CartPage = () => {
   const user = useSelector(selectCurrentUser);
   const token = useSelector(selectToken);
 
+  // Remove item — restore full qty back to stock
+  const handleRemove = async (item) => {
+    const qty = item.quantity || 1;
+    dispatch(removeFromCart(item._id));
+    try {
+      await productService.adjustStock(item._id, +qty); // restore stock
+    } catch {
+      toast.error("Could not update stock — please refresh");
+    }
+  };
+
+  // Change quantity
+  const handleQtyChange = async (item, delta) => {
+    const currentQty = item.quantity || 1;
+    // Prevent reducing below 1 without removing
+    if (currentQty + delta < 1) return;
+
+    dispatch(updateQuantity({ productId: item._id, delta }));
+    try {
+      await productService.adjustStock(item._id, -delta);
+    } catch (err) {
+      // Rollback
+      dispatch(updateQuantity({ productId: item._id, delta: -delta }));
+      toast.error(err.message || "Could not update quantity");
+    }
+  };
+
   return (
     <Layout title="Your Cart — EliteMart">
       <div className="max-w-6xl mx-auto px-4 py-10">
-        {/* Page header */}
-        <div className="mb-8">
+        <div style={{ marginBottom: "2rem" }}>
           <h1
             style={{
               fontFamily: "var(--font-display)",
@@ -35,7 +62,7 @@ const CartPage = () => {
           >
             {token ? `${user?.name}'s Cart` : "Your Cart"}
           </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--ink-soft)" }}>
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
             {items.length > 0
               ? `${items.length} item${items.length !== 1 ? "s" : ""}`
               : "Your cart is empty"}
@@ -43,9 +70,15 @@ const CartPage = () => {
         </div>
 
         {items.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-5xl mb-4">🛒</p>
-            <p className="mb-5 text-sm" style={{ color: "var(--ink-soft)" }}>
+          <div style={{ textAlign: "center", padding: "5rem 0" }}>
+            <p style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>🛒</p>
+            <p
+              style={{
+                color: "var(--ink-soft)",
+                fontSize: 14,
+                marginBottom: "1.5rem",
+              }}
+            >
               Nothing here yet!
             </p>
             <button onClick={() => navigate("/")} className="btn-primary">
@@ -53,15 +86,27 @@ const CartPage = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 360px",
+              gap: 24,
+            }}
+          >
             {/* Cart items */}
-            <div className="md:col-span-2 flex flex-col gap-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {items.map((item) => (
                 <div
                   key={item._id}
-                  className="panel flex gap-4 items-start"
-                  style={{ padding: "1rem" }}
+                  className="panel"
+                  style={{
+                    display: "flex",
+                    gap: 16,
+                    alignItems: "flex-start",
+                    padding: "1rem",
+                  }}
                 >
+                  {/* Image */}
                   <div
                     style={{
                       width: 80,
@@ -85,65 +130,84 @@ const CartPage = () => {
                     />
                   </div>
 
-                  <div className="flex-1 flex flex-col gap-1 min-w-0">
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <p
-                      className="text-sm font-semibold truncate"
-                      style={{ color: "var(--ink)" }}
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--ink)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
                     >
                       {item.name}
                     </p>
-                    <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--ink-soft)",
+                        marginTop: 2,
+                      }}
+                    >
                       {truncate(item.description, 55)}
                     </p>
 
                     {/* Qty controls */}
-                    <div className="flex items-center gap-2 mt-1">
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginTop: 8,
+                      }}
+                    >
                       <button
-                        onClick={() =>
-                          dispatch(
-                            updateQuantity({ productId: item._id, delta: -1 }),
-                          )
-                        }
+                        onClick={() => handleQtyChange(item, -1)}
                         style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: 6,
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
                           border: "1px solid var(--stone)",
                           background: "var(--cream)",
-                          fontWeight: 600,
-                          fontSize: 14,
+                          fontWeight: 700,
+                          fontSize: 16,
                           cursor: "pointer",
                           color: "var(--ink-mid)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
                         −
                       </button>
                       <span
-                        className="text-sm font-medium"
                         style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "var(--ink)",
                           minWidth: 20,
                           textAlign: "center",
-                          color: "var(--ink)",
                         }}
                       >
                         {item.quantity || 1}
                       </span>
                       <button
-                        onClick={() =>
-                          dispatch(
-                            updateQuantity({ productId: item._id, delta: 1 }),
-                          )
-                        }
+                        onClick={() => handleQtyChange(item, +1)}
                         style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: 6,
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
                           border: "1px solid var(--stone)",
                           background: "var(--cream)",
-                          fontWeight: 600,
-                          fontSize: 14,
+                          fontWeight: 700,
+                          fontSize: 16,
                           cursor: "pointer",
                           color: "var(--ink-mid)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
                         +
@@ -151,19 +215,27 @@ const CartPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  {/* Price + remove */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      gap: 8,
+                    }}
+                  >
                     <p
                       style={{
                         fontFamily: "var(--font-display)",
-                        fontSize: "0.95rem",
-                        fontWeight: 600,
+                        fontSize: "1rem",
+                        fontWeight: 700,
                         color: "var(--accent)",
                       }}
                     >
                       {formatPrice(item.price * (item.quantity || 1))}
                     </p>
                     <button
-                      onClick={() => dispatch(removeFromCart(item._id))}
+                      onClick={() => handleRemove(item)}
                       className="btn-danger"
                       style={{ fontSize: 11, padding: "4px 10px" }}
                     >
@@ -175,25 +247,36 @@ const CartPage = () => {
             </div>
 
             {/* Order summary */}
-            <div className="md:col-span-1">
+            <div>
               <div
                 className="panel"
-                style={{ position: "sticky", top: "5rem" }}
+                style={{
+                  position: "sticky",
+                  top: "calc(var(--header-h,4rem) + 1rem)",
+                }}
               >
-                <p className="section-header" style={{ marginBottom: "1rem" }}>
-                  Order Summary
-                </p>
+                <p className="section-header">Order Summary</p>
 
                 <div
-                  className="flex justify-between text-sm mb-2"
-                  style={{ color: "var(--ink-mid)" }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 13,
+                    color: "var(--ink-mid)",
+                    marginBottom: 8,
+                  }}
                 >
                   <span>Subtotal</span>
                   <span>{formatPrice(total)}</span>
                 </div>
                 <div
-                  className="flex justify-between text-sm mb-4"
-                  style={{ color: "var(--ink-mid)" }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 13,
+                    color: "var(--ink-mid)",
+                    marginBottom: 16,
+                  }}
                 >
                   <span>Shipping</span>
                   <span style={{ color: "var(--success)", fontWeight: 500 }}>
@@ -204,8 +287,13 @@ const CartPage = () => {
                 <div className="divider" />
 
                 <div
-                  className="flex justify-between font-semibold mb-5"
-                  style={{ color: "var(--ink)" }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontWeight: 600,
+                    marginBottom: 20,
+                    color: "var(--ink)",
+                  }}
                 >
                   <span>Total</span>
                   <span
@@ -221,14 +309,21 @@ const CartPage = () => {
                 {!token && (
                   <button
                     onClick={() => navigate("/login", { state: "/cart" })}
-                    className="btn-primary w-full py-3"
+                    className="btn-primary w-full"
+                    style={{ padding: "12px 0" }}
                   >
                     Login to Checkout
                   </button>
                 )}
 
                 {token && !user?.address && (
-                  <div className="flex flex-col gap-3">
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
                     <div
                       style={{
                         background: "#FFFBEB",
@@ -239,12 +334,12 @@ const CartPage = () => {
                         color: "#92400E",
                       }}
                     >
-                      ⚠️ Add a delivery address to your profile before checking
-                      out.
+                      ⚠️ Add a delivery address before checking out.
                     </div>
                     <button
                       onClick={() => navigate("/dashboard/user/profile")}
-                      className="btn-outline w-full py-3"
+                      className="btn-outline w-full"
+                      style={{ padding: "11px 0" }}
                     >
                       Add Address
                     </button>
@@ -252,7 +347,13 @@ const CartPage = () => {
                 )}
 
                 {token && user?.address && (
-                  <div className="flex flex-col gap-3">
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
                     <div
                       style={{
                         background: "var(--cream)",
@@ -262,26 +363,30 @@ const CartPage = () => {
                       }}
                     >
                       <p
-                        className="text-xs font-semibold mb-1"
-                        style={{ color: "var(--ink-soft)" }}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "var(--ink-soft)",
+                          marginBottom: 3,
+                          textTransform: "uppercase",
+                          letterSpacing: ".05em",
+                        }}
                       >
                         Delivering to
                       </p>
-                      <p
-                        className="text-sm"
-                        style={{ color: "var(--ink-mid)" }}
-                      >
+                      <p style={{ fontSize: 13, color: "var(--ink-mid)" }}>
                         {user.address}
                       </p>
                       <button
                         onClick={() => navigate("/dashboard/user/profile")}
-                        className="text-xs mt-1 hover:underline"
                         style={{
+                          fontSize: 11,
                           color: "var(--accent)",
                           background: "none",
                           border: "none",
                           cursor: "pointer",
                           padding: 0,
+                          marginTop: 4,
                         }}
                       >
                         Change address
@@ -289,7 +394,8 @@ const CartPage = () => {
                     </div>
                     <button
                       onClick={() => navigate("/checkout")}
-                      className="btn-primary w-full py-3"
+                      className="btn-primary w-full"
+                      style={{ padding: "13px 0", fontSize: 14 }}
                     >
                       Proceed to Checkout
                     </button>
