@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Modal } from "antd";
+const { confirm } = Modal;
 import Layout from "../../components/Layout/Layout";
 import AdminMenu from "../../components/Layout/AdminMenu";
 import CategoryForm from "../../components/Form/CategoryForm";
@@ -60,19 +61,32 @@ const CreateCategory = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this category?")) return;
-    try {
-      const { data } = await categoryService.delete(id);
-      if (data?.success) {
-        toast.success("Category deleted");
-        fetchCategories();
-      } else {
-        toast.error(data?.message);
-      }
-    } catch {
-      toast.error("Something went wrong");
-    }
+  const handleDelete = async (id, categoryName) => {
+    confirm({
+      title: "Delete Category",
+      content: `Are you sure you want to permanently delete "${categoryName}"?`,
+      okText: "Yes, Delete",
+      cancelText: "Cancel",
+      centered: true,
+      okButtonProps: {
+        danger: true,
+        className: "bg-red-500 hover:bg-red-600",
+      },
+      onOk: async () => {
+        try {
+          const { data } = await categoryService.delete(id);
+
+          if (data?.success) {
+            toast.success(`"${categoryName}" deleted successfully`);
+            fetchCategories();
+          } else {
+            toast.error(data?.message);
+          }
+        } catch {
+          toast.error("Something went wrong");
+        }
+      },
+    });
   };
 
   return (
@@ -137,7 +151,7 @@ const CreateCategory = () => {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(c._id)}
+                            onClick={() => handleDelete(c._id, c.name)}
                             className="btn-danger text-xs px-3 py-1"
                           >
                             Delete
