@@ -25,6 +25,58 @@ import {
   HiMail,
   HiTag,
 } from "react-icons/hi";
+import { FaWineBottle } from "react-icons/fa";
+import {
+  FaLaptop,
+  FaTshirt,
+  FaShoePrints,
+  FaClock,
+  FaGem,
+  FaBasketballBall,
+  FaCouch,
+  FaBook,
+  FaGamepad,
+  FaShoppingBasket,
+  FaShoppingCart,
+} from "react-icons/fa";
+import { MdOutlineDevicesOther } from "react-icons/md";
+
+const CATEGORY_ICONS = {
+  electronics: <FaLaptop />,
+  tech: <FaLaptop />,
+  computers: <MdOutlineDevicesOther />,
+
+  fashion: <FaTshirt />,
+  clothing: <FaTshirt />,
+  clothes: <FaTshirt />,
+
+  shoes: <FaShoePrints />,
+  footwear: <FaShoePrints />,
+
+  accessories: <FaClock />,
+  watches: <FaClock />,
+
+  jewellery: <FaGem />,
+  jewelry: <FaGem />,
+
+  beauty: <FaGem />,
+  cosmetics: <FaGem />,
+
+  sports: <FaBasketballBall />,
+  fitness: <FaBasketballBall />,
+
+  home: <FaCouch />,
+  furniture: <FaCouch />,
+
+  books: <FaBook />,
+
+  toys: <FaGamepad />,
+
+  grocery: <FaShoppingBasket />,
+  food: <FaShoppingBasket />,
+
+  bottles: <FaWineBottle />,
+};
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -40,6 +92,8 @@ const Header = () => {
 
   const catRef = useRef(null);
   const userRef = useRef(null);
+
+  const normalize = (str) => str?.toLowerCase().replace(/[^a-z]/g, "");
 
   useEffect(() => {
     const h = (e) => {
@@ -342,7 +396,9 @@ const Header = () => {
                             flexShrink: 0,
                           }}
                         >
-                          🛍️
+                          {CATEGORY_ICONS[c.slug?.toLowerCase()] ||
+                            CATEGORY_ICONS[c.name?.toLowerCase()] ||
+                            CATEGORY_ICONS.default}
                         </span>
                         {c.name}
                       </Link>
