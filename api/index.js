@@ -18,9 +18,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "http://localhost:5173",
+      "https://mern-ecommerce-app-v2-q6701lhym-ushani-saubhagyas-projects.vercel.app/",
       process.env.FRONTEND_URL,
-    ],
+    ].filter(Boolean),
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
