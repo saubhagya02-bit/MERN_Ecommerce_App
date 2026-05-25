@@ -6,8 +6,10 @@ import Layout from "../../components/Layout/Layout";
 import AdminMenu from "../../components/Layout/AdminMenu";
 import categoryService from "../../api/categoryService";
 import productService from "../../api/productService";
+import { Modal } from "antd";
 
 const { Option } = Select;
+const { confirm } = Modal;
 
 const UpdateProduct = () => {
   const navigate = useNavigate();
@@ -83,16 +85,28 @@ const UpdateProduct = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this product?"))
-      return;
-    try {
-      await productService.delete(id);
-      toast.success("Product deleted");
-      navigate("/dashboard/admin/products");
-    } catch {
-      toast.error("Delete failed");
-    }
+  const handleDelete = (id, productName) => {
+    confirm({
+      title: "Delete Product",
+      content: `Are you sure you want to permanently delete "${productName}"? This action cannot be undone.`,
+      okText: "Yes, Delete",
+      cancelText: "Cancel",
+      centered: true,
+      okButtonProps: {
+        danger: true,
+        className: "bg-red-500 hover:bg-red-600",
+      },
+
+      onOk: async () => {
+        try {
+          await productService.delete(id);
+          toast.success(`"${productName}" deleted successfully`);
+          navigate("/dashboard/admin/products");
+        } catch (error) {
+          toast.error("Failed to delete product");
+        }
+      },
+    });
   };
 
   return (
