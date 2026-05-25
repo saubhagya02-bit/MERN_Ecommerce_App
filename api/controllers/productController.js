@@ -2,12 +2,15 @@ import productModel from "../models/productModel.js";
 import fs from "fs";
 import slugify from "slugify";
 import Category from "../models/categoryModel.js";
+import cloudinary from "../config/cloudinary.js";
 
 export const createProductController = async (req, res) => {
   try {
-    const { name, description, price, category, quantity, shipping } =
-      req.fields;
-    const photo = req.files?.photo;
+    const { name, description, price, category, quantity, shipping } = req.body;
+
+    const photo = req.file;
+
+    // Validation
     switch (true) {
       case !name:
         return res.status(400).send({ error: "Name is required" });
@@ -19,9 +22,32 @@ export const createProductController = async (req, res) => {
         return res.status(400).send({ error: "Category is required" });
       case !quantity:
         return res.status(400).send({ error: "Quantity is required" });
-      case photo && photo.size > 1000000:
-        return res.status(400).send({ error: "Photo < 1MB" });
+      case !photo:
+        return res.status(400).send({ error: "Photo is required" });
     }
+
+    // Upload image to Cloudinary
+    let imageUrl = "";
+
+    if (photo) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "mern-ecommerce-products",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          },
+        );
+
+        stream.end(photo.buffer);
+      });
+
+      imageUrl = result.secure_url;
+    }
+
+    // Save product
     const product = new productModel({
       name,
       slug: slugify(name),
@@ -30,12 +56,11 @@ export const createProductController = async (req, res) => {
       category,
       quantity,
       shipping,
+      photo: imageUrl,
     });
-    if (photo) {
-      product.photo.data = fs.readFileSync(photo.path);
-      product.photo.contentType = photo.type;
-    }
+
     await product.save();
+
     res.status(201).send({
       success: true,
       message: "Product created successfully",
