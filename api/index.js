@@ -17,13 +17,11 @@ const app = express();
 app.use(
   cors({
     origin: [
+      "https://mern-ecommerce-app-v2.vercel.app",
       "http://localhost:3000",
-      "mern-ecommerce-app-v2.vercel.app",
-      process.env.FRONTEND_URL,
-    ].filter(Boolean),
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   }),
 );
 app.use(express.json());
@@ -40,6 +38,11 @@ app.get("/", (_, res) => res.send("<h1>EliteMart API ✅</h1>"));
 app.use((req, res) =>
   res.status(404).json({ success: false, message: "Route not found" }),
 );
+
+app.use((req, res, next) => {
+  console.log("Incoming request:", req.method, req.url);
+  next();
+});
 app.use((err, req, res, next) => {
   console.error("Global Error:", err.message);
   res.status(500).json({

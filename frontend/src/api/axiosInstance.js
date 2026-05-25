@@ -8,7 +8,6 @@ if (!API_BASE) {
 
 const axiosInstance = axios.create({
   baseURL: `${API_BASE}/api/v1`,
-  withCredentials: true,
 });
 
 axiosInstance.interceptors.request.use((config) => {
