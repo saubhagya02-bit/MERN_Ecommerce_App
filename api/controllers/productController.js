@@ -2,15 +2,12 @@ import productModel from "../models/productModel.js";
 import fs from "fs";
 import slugify from "slugify";
 import Category from "../models/categoryModel.js";
-import cloudinary from "../config/cloudinary.js";
 
 export const createProductController = async (req, res) => {
   try {
-    const { name, description, price, category, quantity, shipping } = req.body;
-
-    const photo = req.file;
-
-    // Validation
+    const { name, description, price, category, quantity, shipping } =
+      req.fields;
+    const photo = req.files?.photo;
     switch (true) {
       case !name:
         return res.status(400).send({ error: "Name is required" });
@@ -22,32 +19,9 @@ export const createProductController = async (req, res) => {
         return res.status(400).send({ error: "Category is required" });
       case !quantity:
         return res.status(400).send({ error: "Quantity is required" });
-      case !photo:
-        return res.status(400).send({ error: "Photo is required" });
+      case photo && photo.size > 1000000:
+        return res.status(400).send({ error: "Photo < 1MB" });
     }
-
-    // Upload image to Cloudinary
-    let imageUrl = "";
-
-    if (photo) {
-      const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: "mern-ecommerce-products",
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          },
-        );
-
-        stream.end(photo.buffer);
-      });
-
-      imageUrl = result.secure_url;
-    }
-
-    // Save product
     const product = new productModel({
       name,
       slug: slugify(name),
@@ -56,23 +30,28 @@ export const createProductController = async (req, res) => {
       category,
       quantity,
       shipping,
-      photo: imageUrl,
     });
-
+    if (photo) {
+      product.photo.data = fs.readFileSync(photo.path);
+      product.photo.contentType = photo.type;
+    }
     await product.save();
-
-    res.status(201).send({
-      success: true,
-      message: "Product created successfully",
-      product,
-    });
+    res
+      .status(201)
+      .send({
+        success: true,
+        message: "Product created successfully",
+        product,
+      });
   } catch (error) {
     console.error("Create Product Error:", error);
-    res.status(500).send({
-      success: false,
-      message: "Error creating product",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error creating product",
+        error: error.message,
+      });
   }
 };
 
@@ -99,11 +78,13 @@ export const getSingleProductController = async (req, res) => {
       .populate("category");
     res.status(200).send({ success: true, product });
   } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: "Error getting product",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error getting product",
+        error: error.message,
+      });
   }
 };
 
@@ -111,16 +92,21 @@ export const productPhotoController = async (req, res) => {
   try {
     const product = await productModel.findById(req.params.pid).select("photo");
     if (product?.photo?.data) {
-      res.set("Content-type", product.photo.contentType);
+      // Allow image to load cross-origin (Vercel frontend → Railway backend)
+      res.set("Content-Type", product.photo.contentType);
+      res.set("Cross-Origin-Resource-Policy", "cross-origin");
+      res.set("Cache-Control", "public, max-age=86400"); // cache 24h
       return res.status(200).send(product.photo.data);
     }
     res.status(404).send({ success: false, message: "No photo found" });
   } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: "Error getting photo",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error getting photo",
+        error: error.message,
+      });
   }
 };
 
@@ -131,11 +117,13 @@ export const deleteProductController = async (req, res) => {
       .status(200)
       .send({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: "Error deleting product",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error deleting product",
+        error: error.message,
+      });
   }
 };
 
@@ -168,18 +156,22 @@ export const updateProductController = async (req, res) => {
       product.photo.contentType = photo.type;
     }
     await product.save();
-    res.status(201).send({
-      success: true,
-      message: "Product updated successfully",
-      product,
-    });
+    res
+      .status(201)
+      .send({
+        success: true,
+        message: "Product updated successfully",
+        product,
+      });
   } catch (error) {
     console.error("Update Product Error:", error);
-    res.status(500).send({
-      success: false,
-      message: "Error updating product",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error updating product",
+        error: error.message,
+      });
   }
 };
 
@@ -206,11 +198,13 @@ export const productCountController = async (req, res) => {
     const total = await productModel.countDocuments();
     res.status(200).send({ success: true, total });
   } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: "Error fetching count",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error fetching count",
+        error: error.message,
+      });
   }
 };
 
@@ -229,11 +223,13 @@ export const productCategoryController = async (req, res) => {
       .status(200)
       .send({ success: true, category, count: products.length, products });
   } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: "Error fetching by category",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error fetching by category",
+        error: error.message,
+      });
   }
 };
 
@@ -272,11 +268,13 @@ export const relatedProductController = async (req, res) => {
       .populate("category");
     res.status(200).send({ success: true, products });
   } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: "Error fetching related",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .send({
+        success: false,
+        message: "Error fetching related",
+        error: error.message,
+      });
   }
 };
 
