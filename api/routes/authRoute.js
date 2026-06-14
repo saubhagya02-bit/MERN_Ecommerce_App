@@ -4,6 +4,9 @@ import {
   loginController,
   testController,
   forgotPasswordController,
+  resetPasswordController,
+  refreshTokenController,
+  logoutController,
   updateProfileController,
   getAllUsersController,
 } from "../controllers/authController.js";
@@ -14,6 +17,10 @@ const router = express.Router();
 router.post("/register", registerController);
 router.post("/login", loginController);
 router.post("/forgot-password", forgotPasswordController);
+router.post("/reset-password/:token", resetPasswordController);
+
+router.post("/refresh", refreshTokenController);
+router.post("/logout", requireSignIn, logoutController);
 
 router.put("/profile", requireSignIn, updateProfileController);
 router.get("/user-auth", requireSignIn, (req, res) =>
