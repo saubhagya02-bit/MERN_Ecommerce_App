@@ -20,6 +20,7 @@ import PageNotFound from "./pages/public/PageNotFound";
 import Register from "./pages/Auth/Register";
 import Login from "./pages/Auth/Login";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 // User pages
 import Dashboard from "./pages/user/Dashboard";
@@ -92,6 +93,7 @@ const App = () => (
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* User — protected */}
       <Route path="/dashboard" element={<PrivateRoute />}>

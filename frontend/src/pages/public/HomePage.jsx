@@ -164,7 +164,7 @@ const HomePage = () => {
   return (
     <Layout title="EliteMart — Shop All Products">
       <div style={{ marginTop: 0, paddingTop: 0 }}>
-        {/* HERO SECTIO */}
+        {/* HERO SECTION */}
         <div
           style={{
             position: "relative",
