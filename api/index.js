@@ -43,9 +43,9 @@ app.use(
   }),
 );
 
-//  CORS
+// CORS
 const allowedOrigins = [
-  "https://mern-ecommerce-app-v2.vercel.app",
+ "https://mern-ecommerce-app-v2.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",
   process.env.FRONTEND_URL,
