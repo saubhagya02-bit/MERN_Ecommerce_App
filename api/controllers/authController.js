@@ -1,6 +1,8 @@
 import { comparePassword, hashPassword } from "../helpers/authHelper.js";
 import userModel from "../models/userModel.js";
 import JWT from "jsonwebtoken";
+import crypto from "crypto";
+import { sendPasswordResetEmail } from "../config/emailService.js";
 
 export const registerController = async (req, res) => {
   try {
@@ -110,41 +112,6 @@ export const loginController = async (req, res) => {
     });
   }
 };
-export const forgotPasswordController = async (req, res) => {
-  try {
-    const { email, answer, newPassword } = req.body;
-    if (!email) {
-      return res.status(400).send({ message: "Email is required" });
-    }
-    if (!answer) {
-      return res.status(400).send({ message: "Answer is required" });
-    }
-    if (!newPassword) {
-      return res.status(400).send({ message: "New Password is required" });
-    }
-    const user = await userModel.findOne({ email, answer });
-
-    if (!user) {
-      return res.status(404).send({
-        success: false,
-        message: "Wrong Email or Answer",
-      });
-    }
-    const hashed = await hashPassword(newPassword);
-    await userModel.findByIdAndUpdate(user._id, { password: hashed });
-    res.status(200).send({
-      success: true,
-      message: "Password reset successfully",
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Something went wrong",
-      error,
-    });
-  }
-};
 
 export const testController = (req, res) => {
   res.send("Protected Route");
@@ -206,4 +173,152 @@ export const getAllUsersController = async (req, res) => {
       error,
     });
   }
+};
+
+// Request reset — sends email
+// POST /api/v1/auth/forgot-password
+export const forgotPasswordController = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email)
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required" });
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message:
+          "If this email is registered you will receive a reset link shortly",
+      });
+    }
+
+    // Generate secure random token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    // Save hashed token + 1 hour expiry
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
+    await user.save();
+
+    // Send email with raw token
+    await sendPasswordResetEmail(user.email, user.name, resetToken);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset email sent. Check your inbox.",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error.message);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send reset email" });
+  }
+};
+
+// Reset password using token
+// POST /api/v1/auth/reset-password/:token
+export const resetPasswordController = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6)
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await userModel.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user)
+      return res.status(400).json({
+        success: false,
+        message: "Reset link is invalid or has expired",
+      });
+
+    user.password = await hashPassword(newPassword);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully. You can now sign in.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error.message);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to reset password" });
+  }
+};
+
+// Refresh token
+export const refreshTokenController = async (req, res) => {
+  const token = req.cookies?.refreshToken;
+  if (!token)
+    return res
+      .status(401)
+      .json({ success: false, message: "No refresh token" });
+
+  try {
+    const secret =
+      process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET + "_refresh";
+    const decoded = JWT.verify(token, secret);
+    const user = await userModel
+      .findById(decoded._id)
+      .select("-password -answer");
+    if (!user)
+      return res
+        .status(401)
+        .json({ success: false, message: "User not found" });
+
+    const newAccess = JWT.sign(
+      { _id: user._id },
+      process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET,
+      { expiresIn: "15m" },
+    );
+    const newRefresh = JWT.sign(
+      { _id: user._id },
+      process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET + "_refresh",
+      { expiresIn: "7d" },
+    );
+
+    res.cookie("refreshToken", newRefresh, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({ success: true, token: newAccess, user });
+  } catch {
+    res.clearCookie("refreshToken");
+    res.status(401).json({
+      success: false,
+      message: "Invalid refresh token",
+      code: "REFRESH_EXPIRED",
+    });
+  }
+};
+
+// Logout
+export const logoutController = (req, res) => {
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
+  res.status(200).json({ success: true, message: "Logged out" });
 };
