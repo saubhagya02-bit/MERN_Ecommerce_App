@@ -12,7 +12,10 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     quantity: { type: Number, required: true },
-    photo: { data: Buffer, contentType: String },
+    photo: {
+      url: { type: String, default: "" },
+      public_id: { type: String, default: "" },
+    },
     shipping: { type: Boolean },
 
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
