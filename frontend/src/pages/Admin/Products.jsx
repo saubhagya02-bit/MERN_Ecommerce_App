@@ -139,18 +139,33 @@ const Products = () => {
                       className="card group"
                       style={{ textDecoration: "none" }}
                     >
-                      <img
-                        src={productService.getPhotoUrl(p._id)}
-                        alt={p.name}
-                        loading="lazy"
-                        style={{
-                          width: "100%",
-                          height: 176,
-                          objectFit: "contain",
-                          background: "var(--cream)",
-                          padding: 8,
-                        }}
-                      />
+                      {p.photo?.url ? (
+                        <img
+                          src={p.photo.url}
+                          alt={p.name}
+                          loading="lazy"
+                          style={{
+                            width: "100%",
+                            height: 176,
+                            objectFit: "contain",
+                            background: "var(--cream)",
+                            padding: 8,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "100%",
+                            height: 176,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "var(--cream)",
+                          }}
+                        >
+                          No Image
+                        </div>
+                      )}
                       <div style={{ padding: "12px 14px" }}>
                         <p
                           style={{
