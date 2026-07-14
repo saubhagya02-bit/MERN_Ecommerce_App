@@ -24,6 +24,7 @@ const UpdateProduct = () => {
     shipping: "",
   });
   const [photo, setPhoto] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState("");
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +52,7 @@ const UpdateProduct = () => {
           category: p.category?._id || "",
           shipping: p.shipping ? "1" : "0",
         });
+        setPhotoUrl(p.photo?.url || "");
 
         if (catRes.data?.success) setCategories(catRes.data.category);
       } catch {
@@ -85,10 +87,10 @@ const UpdateProduct = () => {
     }
   };
 
-  const handleDelete = (id, productName) => {
+  const handleDelete = () => {
     confirm({
       title: "Delete Product",
-      content: `Are you sure you want to permanently delete "${productName}"? This action cannot be undone.`,
+      content: `Are you sure you want to permanently delete "${form.name}"? This action cannot be undone.`,
       okText: "Yes, Delete",
       cancelText: "Cancel",
       centered: true,
@@ -100,7 +102,7 @@ const UpdateProduct = () => {
       onOk: async () => {
         try {
           await productService.delete(id);
-          toast.success(`"${productName}" deleted successfully`);
+          toast.success(`"${form.name}" deleted successfully`);
           navigate("/dashboard/admin/products");
         } catch (error) {
           toast.error("Failed to delete product");
@@ -161,15 +163,13 @@ const UpdateProduct = () => {
                       onChange={(e) => setPhoto(e.target.files[0])}
                     />
                   </label>
-                  <img
-                    src={
-                      photo
-                        ? URL.createObjectURL(photo)
-                        : productService.getPhotoUrl(id)
-                    }
-                    alt="product"
-                    className="mt-3 h-40 object-contain rounded-lg border border-gray-100"
-                  />
+                  {(photo || photoUrl) && (
+                    <img
+                      src={photo ? URL.createObjectURL(photo) : photoUrl}
+                      alt="product"
+                      className="mt-3 h-40 object-contain rounded-lg border border-gray-100"
+                    />
+                  )}
                 </div>
 
                 {[
