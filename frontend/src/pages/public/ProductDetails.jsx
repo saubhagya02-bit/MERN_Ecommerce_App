@@ -280,7 +280,7 @@ const ProductDetails = () => {
               }}
             >
               <img
-                src={productService.getPhotoUrl(product._id)}
+                src={product.photo?.url}
                 alt={product.name}
                 style={{
                   maxHeight: 300,
