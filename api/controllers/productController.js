@@ -1,13 +1,16 @@
 import productModel from "../models/productModel.js";
-import fs from "fs";
 import slugify from "slugify";
 import Category from "../models/categoryModel.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinaryUpload.js";
 
 export const createProductController = async (req, res) => {
   try {
-    const { name, description, price, category, quantity, shipping } =
-      req.fields;
-    const photo = req.files?.photo;
+    const { name, description, price, category, quantity, shipping } = req.body;
+    const photo = req.file;
+
     switch (true) {
       case !name:
         return res.status(400).send({ error: "Name is required" });
@@ -22,6 +25,7 @@ export const createProductController = async (req, res) => {
       case photo && photo.size > 1000000:
         return res.status(400).send({ error: "Photo < 1MB" });
     }
+
     const product = new productModel({
       name,
       slug: slugify(name),
@@ -31,27 +35,25 @@ export const createProductController = async (req, res) => {
       quantity,
       shipping,
     });
+
     if (photo) {
-      product.photo.data = fs.readFileSync(photo.path);
-      product.photo.contentType = photo.type;
+      const result = await uploadToCloudinary(photo.buffer);
+      product.photo = { url: result.secure_url, public_id: result.public_id };
     }
+
     await product.save();
-    res
-      .status(201)
-      .send({
-        success: true,
-        message: "Product created successfully",
-        product,
-      });
+    res.status(201).send({
+      success: true,
+      message: "Product created successfully",
+      product,
+    });
   } catch (error) {
     console.error("Create Product Error:", error);
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error creating product",
-        error: error.message,
-      });
+    res.status(500).send({
+      success: false,
+      message: "Error creating product",
+      error: error.message,
+    });
   }
 };
 
@@ -60,7 +62,6 @@ export const getProductController = async (req, res) => {
     const products = await productModel
       .find({})
       .populate("category")
-      .select("-photo")
       .sort({ createdAt: -1 });
     res.status(200).send({ success: true, total: products.length, products });
   } catch (error) {
@@ -74,17 +75,14 @@ export const getSingleProductController = async (req, res) => {
   try {
     const product = await productModel
       .findOne({ slug: req.params.slug })
-      .select("-photo")
       .populate("category");
     res.status(200).send({ success: true, product });
   } catch (error) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error getting product",
-        error: error.message,
-      });
+    res.status(500).send({
+      success: false,
+      message: "Error getting product",
+      error: error.message,
+    });
   }
 };
 
@@ -100,38 +98,19 @@ export const productPhotoController = async (req, res) => {
     }
     res.status(404).send({ success: false, message: "No photo found" });
   } catch (error) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error getting photo",
-        error: error.message,
-      });
-  }
-};
-
-export const deleteProductController = async (req, res) => {
-  try {
-    await productModel.findByIdAndDelete(req.params.pid).select("-photo");
-    res
-      .status(200)
-      .send({ success: true, message: "Product deleted successfully" });
-  } catch (error) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error deleting product",
-        error: error.message,
-      });
+    res.status(500).send({
+      success: false,
+      message: "Error getting photo",
+      error: error.message,
+    });
   }
 };
 
 export const updateProductController = async (req, res) => {
   try {
-    const { name, description, price, category, quantity, shipping } =
-      req.fields;
-    const photo = req.files?.photo;
+    const { name, description, price, category, quantity, shipping } = req.body;
+    const photo = req.file;
+
     switch (true) {
       case !name:
         return res.status(400).send({ error: "Name is required" });
@@ -146,32 +125,67 @@ export const updateProductController = async (req, res) => {
       case photo && photo.size > 1000000:
         return res.status(400).send({ error: "Photo < 1MB" });
     }
+
+    const existingProduct = await productModel.findById(req.params.pid);
+    if (!existingProduct)
+      return res
+        .status(404)
+        .send({ success: false, message: "Product not found" });
+
     const product = await productModel.findByIdAndUpdate(
       req.params.pid,
-      { ...req.fields, slug: slugify(name) },
+      {
+        name,
+        description,
+        price,
+        category,
+        quantity,
+        shipping,
+        slug: slugify(name),
+      },
       { new: true },
     );
+
     if (photo) {
-      product.photo.data = fs.readFileSync(photo.path);
-      product.photo.contentType = photo.type;
+      if (existingProduct.photo?.public_id) {
+        await deleteFromCloudinary(existingProduct.photo.public_id);
+      }
+      const result = await uploadToCloudinary(photo.buffer);
+      product.photo = { url: result.secure_url, public_id: result.public_id };
+      await product.save();
     }
-    await product.save();
-    res
-      .status(201)
-      .send({
-        success: true,
-        message: "Product updated successfully",
-        product,
-      });
+
+    res.status(201).send({
+      success: true,
+      message: "Product updated successfully",
+      product,
+    });
   } catch (error) {
     console.error("Update Product Error:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error updating product",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteProductController = async (req, res) => {
+  try {
+    const product = await productModel.findById(req.params.pid).select("photo");
+    if (product?.photo?.public_id) {
+      await deleteFromCloudinary(product.photo.public_id);
+    }
+    await productModel.findByIdAndDelete(req.params.pid);
     res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error updating product",
-        error: error.message,
-      });
+      .status(200)
+      .send({ success: true, message: "Product deleted successfully" });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error deleting product",
+      error: error.message,
+    });
   }
 };
 
@@ -181,7 +195,6 @@ export const productListController = async (req, res) => {
     const page = Number(req.params.page) || 1;
     const products = await productModel
       .find({})
-      .select("-photo")
       .skip((page - 1) * perPage)
       .limit(perPage)
       .sort({ createdAt: -1 });
@@ -198,13 +211,11 @@ export const productCountController = async (req, res) => {
     const total = await productModel.countDocuments();
     res.status(200).send({ success: true, total });
   } catch (error) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error fetching count",
-        error: error.message,
-      });
+    res.status(500).send({
+      success: false,
+      message: "Error fetching count",
+      error: error.message,
+    });
   }
 };
 
@@ -217,19 +228,16 @@ export const productCategoryController = async (req, res) => {
         .send({ success: false, message: "Category not found" });
     const products = await productModel
       .find({ category: category._id })
-      .select("-photo")
       .populate("category");
     res
       .status(200)
       .send({ success: true, category, count: products.length, products });
   } catch (error) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error fetching by category",
-        error: error.message,
-      });
+    res.status(500).send({
+      success: false,
+      message: "Error fetching by category",
+      error: error.message,
+    });
   }
 };
 
@@ -250,7 +258,7 @@ export const searchProductController = async (req, res) => {
         ...(category ? [{ category: category._id }] : []),
       ],
     };
-    const products = await productModel.find(query).select("-photo");
+    const products = await productModel.find(query);
     res.status(200).send({ success: true, count: products.length, products });
   } catch (error) {
     res
@@ -263,18 +271,15 @@ export const relatedProductController = async (req, res) => {
   try {
     const products = await productModel
       .find({ category: req.params.cid, _id: { $ne: req.params.pid } })
-      .select("-photo")
       .limit(4)
       .populate("category");
     res.status(200).send({ success: true, products });
   } catch (error) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "Error fetching related",
-        error: error.message,
-      });
+    res.status(500).send({
+      success: false,
+      message: "Error fetching related",
+      error: error.message,
+    });
   }
 };
 
@@ -287,7 +292,6 @@ export const productFiltersController = async (req, res) => {
     const total = await productModel.countDocuments(args);
     const products = await productModel
       .find(args)
-      .select("-photo")
       .skip((page - 1) * perPage)
       .limit(perPage)
       .sort({ createdAt: -1 });
