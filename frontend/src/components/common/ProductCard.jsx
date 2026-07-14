@@ -65,7 +65,7 @@ const ProductCard = ({ product: initialProduct }) => {
         }}
       >
         <img
-          src={productService.getPhotoUrl(initialProduct._id)}
+          src={initialProduct.photo?.url}
           alt={initialProduct.name}
           loading="lazy"
           style={{
