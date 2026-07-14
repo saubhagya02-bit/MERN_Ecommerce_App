@@ -3,7 +3,6 @@ import {
   createProductController,
   getProductController,
   getSingleProductController,
-  productPhotoController,
   deleteProductController,
   updateProductController,
   productListController,
@@ -15,7 +14,6 @@ import {
   adjustStockController,
 } from "../controllers/productController.js";
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
-import formidable from "express-formidable";
 import upload from "../middlewares/upload.js";
 
 const router = express.Router();
@@ -31,7 +29,7 @@ router.put(
   "/update-product/:pid",
   requireSignIn,
   isAdmin,
-  formidable(),
+  upload.single("photo"),
   updateProductController,
 );
 router.delete("/product/:pid", requireSignIn, isAdmin, deleteProductController);
@@ -45,7 +43,6 @@ router.get("/related-product/:pid/:cid", relatedProductController);
 router.post("/product-filters", productFiltersController);
 router.get("/get-product", getProductController);
 router.get("/get-product/:slug", getSingleProductController);
-router.get("/product-photo/:pid", productPhotoController);
 router.get("/search/:keyword", searchProductController);
 
 export default router;
