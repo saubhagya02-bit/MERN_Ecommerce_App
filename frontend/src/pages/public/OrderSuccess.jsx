@@ -40,7 +40,7 @@ const OrderSuccess = () => {
   };
 
   return (
-    <Layout title="Order Confirmed — EShop">
+    <Layout title="Order Confirmed — EliteMart">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-8">
           <HiCheckCircle className="text-7xl text-green-500 mx-auto mb-4" />
